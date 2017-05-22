@@ -18,10 +18,10 @@ namespace AppBarServices.Structs
         // An application-defined message identifier. The application uses the specified identifier for
         // notification messages that it sends to the appbar identified by the hWnd member.
         // This member is used when sending the ABM_NEW message.
-        internal uint uCallbackMessage;
+        internal int uCallbackMessage;
         // A value that specifies an edge of the screen. The following messages use this member:
         // ABM_GETAUTOHIDEBAR, ABM_SETAUTOHIDEBAR, ABM_GETAUTOHIDEBAREX, ABM_SETAUTOHIDEBAREX, ABM_QUERYPOS, ABM_SETPOS
-        internal ScreenEdge uEdge;
+        internal int uEdge;
         // The use depends on the message:
         //  - ABM_GETTASKBARPOS, ABM_QUERYPOS, ABM_SETPOS: The bounding rectangle, in screen coordinates, of an appbar or the Windows taskbar.
         //  - ABM_GETAUTOHIDEBAREX, ABM_SETAUTOHIDEBAREX: The monitor on which the operation is being performed. 

@@ -14,7 +14,7 @@ namespace AppBarServices
     {
         #region Fields
         // To receive notifications from the OS, the AppBar needs to provide a CallbackID.
-        private uint _callbackID;
+        private int _callbackID;
         // The window which the AppBarHandler is handling.
         private Window _windowToHandle;
         // The AppBarType can be either Standard or AutoHide.
@@ -33,7 +33,7 @@ namespace AppBarServices
             set { throw new NotImplementedException(); }
         }
         // Encapsulates _callbackID.
-        public uint CallbackID
+        public int CallbackID
         {
             get { return _callbackID; }
         }
@@ -129,7 +129,7 @@ namespace AppBarServices
             {
                 return false;
             }
-
+            
             // Since the AppBar is now registered, it must receive certain notifications and handle them via WindowProc.
             // Therefore a hook is added to the HwndSource object of the WPF window.
             windowSource.AddHook(new HwndSourceHook(WindowProc));
@@ -150,7 +150,7 @@ namespace AppBarServices
             AppBarData appBarData = new AppBarData();
             appBarData.cbSize = Marshal.SizeOf(appBarData);
             appBarData.hWnd = windowSource.Handle;
-            appBarData.uEdge = screenEdge;
+            appBarData.uEdge = (int)screenEdge;
 
             // Specify the dimensions of the AppBar based on the 'screenEdge' and 'margin' parameters.
             if (screenEdge == ScreenEdge.Left || screenEdge == ScreenEdge.Right)
@@ -230,7 +230,7 @@ namespace AppBarServices
         // Registers a message value with the operating system, that is guaranteed to be unique throughout the system for a given 'msg' string.
         // This function is needed in order for the AppBar to be able to receive notifications from the operating system.
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
-        private static extern uint RegisterWindowMessage(string msg);
+        private static extern int RegisterWindowMessage(string msg);
         #endregion
     }
 }
