@@ -62,5 +62,16 @@ namespace WindowTesting
         {
             _appBarHandler.RemoveAppBar();
         }
+
+        private void btnStuffA_Click(object sender, RoutedEventArgs e)
+        {
+            this.Left = 1;
+            this.Top = 0;
+        }
+
+        private void btnStuffB_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }
