@@ -49,7 +49,7 @@ namespace AppBarServices
         public AppBarHandler(Window windowToHandle)
         {
             // Sets the CallbackID field to a unique value based on the datetime when the handler is initialized.
-            _callbackID = RegisterWindowMessage(String.Format("AppBarHandler_{0}", DateTime.Now.Ticks));
+            _callbackID = (int)RegisterWindowMessage(String.Format("AppBarHandler_{0}", DateTime.Now.Ticks));
             // -
             _windowToHandle = windowToHandle;
         }
@@ -86,6 +86,10 @@ namespace AppBarServices
                 }
             }
 
+            // *** There could and maybe should be some more code here: ***
+            // Event to indicate that the AppBar has been placed.
+            // ************************************************************
+
             return true;
         }
 
@@ -96,6 +100,10 @@ namespace AppBarServices
             {
                 HandleAppBarRemove();
             }
+
+            // *** There could and maybe should be some more code here: ***
+            // Event to indicate that the AppBar has been removed.
+            // ************************************************************
 
             return true;
         }
@@ -129,12 +137,11 @@ namespace AppBarServices
             {
                 return false;
             }
-            
+
             // Since the AppBar is now registered, it must receive certain notifications and handle them via WindowProc.
             // Therefore a hook is added to the HwndSource object of the WPF window.
             windowSource.AddHook(new HwndSourceHook(WindowProc));
 
-            // Reaching this point signals that everything went as expected, therefore set the registered flag to and return true.
             _appBarIsRegistered = true;
             return true;
         }
@@ -186,8 +193,9 @@ namespace AppBarServices
 
             // Call the SHAppBarMessage function to first query the position where the AppBar should go an then based on the updated
             // appBarData parameter set the position (reserve it).
-            SHAppBarMessage((int)MessageIdentifier.ABM_QUERYPOS, ref appBarData);
-            SHAppBarMessage((int)MessageIdentifier.ABM_SETPOS, ref appBarData);
+            uint testTrue;
+            testTrue = SHAppBarMessage((int)MessageIdentifier.ABM_QUERYPOS, ref appBarData);
+            testTrue = SHAppBarMessage((int)MessageIdentifier.ABM_SETPOS, ref appBarData);
 
             // Move and size the AppBar to fit the bounding rectangle passed to the operating system by the last call to the 
             // SHAppBarMessage function. I guess this wont work because the space I want to move to is reserved?.
@@ -195,9 +203,6 @@ namespace AppBarServices
             _windowToHandle.Left = appBarData.rc.left;
             _windowToHandle.Width = appBarData.rc.right - appBarData.rc.left;
             _windowToHandle.Height = appBarData.rc.bottom - appBarData.rc.top;
-
-            // *** Not finished yet! ***
-            throw new NotImplementedException();
         }
 
         // Removes the AppBar from the operating system.
@@ -218,19 +223,23 @@ namespace AppBarServices
             // Since the AppBar is not registered any longer, no messages from the operating system should receive special treatment anymore.
             // Therefore the hook is removed from the HwndSource object of the WPF window.
             windowSource.RemoveHook(new HwndSourceHook(WindowProc));
+
+            _appBarIsRegistered = false;
         }
         #endregion
 
 
         #region External Functions (unmanaged code)
-        // Sends an AppBar message to the operating system (i.e. does all the actual AppBar stuff, like registering and removing it). 
+        // Sends an AppBar message to the operating system (i.e. does all the actual AppBar stuff, like registering and removing it).
+        // Useful side note: The microsoft docs state that for some messages (e.g. ABM_REMOVE) this method always returns true (1).
+        // However if the C# implementation is incorrect (e.g. wrong types in AppBarData) the function will return false (0) instead.
         [DllImport("SHELL32", CallingConvention = CallingConvention.StdCall)]
         private static extern uint SHAppBarMessage(int dwMessage, ref AppBarData pData);
 
         // Registers a message value with the operating system, that is guaranteed to be unique throughout the system for a given 'msg' string.
         // This function is needed in order for the AppBar to be able to receive notifications from the operating system.
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
-        private static extern int RegisterWindowMessage(string msg);
+        private static extern uint RegisterWindowMessage(string msg);
         #endregion
     }
 }
