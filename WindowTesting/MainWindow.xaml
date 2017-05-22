@@ -1,0 +1,64 @@
+﻿<Window x:Class="WindowTesting.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WindowTesting"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*" />
+            <ColumnDefinition Width="8*" />
+            <ColumnDefinition Width="1*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="1*" />
+            <RowDefinition Height="8*" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="1" Grid.Column="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <Button Name="btnPlaceTop"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Click="btnPlaceTop_Click"
+                    Content="Place at top" />
+
+            <Button Name="btnPlaceLeft"
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Click="btnPlaceLeft_Click"
+                    Content="Place at left" />
+
+            <Button Name="btnRemove"
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Click="btnRemove_Click"
+                    Content="Remove" />
+
+            <Button Name="btnPlaceRight"
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Click="btnPlaceRight_Click"
+                    Content="Place at right" />
+
+            <Button Name="btnPlaceBottom"
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Click="btnPlaceBottom_Click"
+                    Content="Place at bottom" />
+        </Grid>
+    </Grid>
+</Window>
