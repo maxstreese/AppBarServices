@@ -1,7 +1,7 @@
-﻿<Application x:Class="WindowTesting.App"
+﻿<Application x:Class="TestStuffWPF.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:WindowTesting"
+             xmlns:local="clr-namespace:TestStuffWPF"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
          

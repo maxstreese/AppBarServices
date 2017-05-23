@@ -16,7 +16,7 @@ using System.Windows.Shapes;
 using AppBarServices;
 using AppBarServices.Enums;
 
-namespace WindowTesting
+namespace TestStuffWPF
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

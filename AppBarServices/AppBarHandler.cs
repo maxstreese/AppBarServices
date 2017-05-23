@@ -1,4 +1,5 @@
-﻿// *** Do not forget to add a description. ***
+﻿// The class 'AppBarHandler' implements all of the logic of 'AppBarServices'. It is the only class defined with the public modifier
+// and its intended use is for a WPF window to define it as a member and call its public methods in order to implement an AppBar. 
 
 using System;
 using System.Windows;

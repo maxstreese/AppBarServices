@@ -2,13 +2,9 @@
 // differ according to different 'MessageIdentifier' enum items being supplied to the function.
 
 using System;
-using System.Runtime.InteropServices;
-
-using AppBarServices.Enums;
 
 namespace AppBarServices.Structs
 {
-    [StructLayout(LayoutKind.Sequential)]
     internal struct AppBarData
     {
         // The size of the struct in bytes. All messages use this member.
