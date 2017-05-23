@@ -49,7 +49,8 @@
     <Compile Include="Enums\ScreenEdge.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Structs\AppBarData.cs" />
-    <Compile Include="Structs\Rectangle.cs" />
+    <Compile Include="Structs\AppBarWindowAttributes.cs" />
+    <Compile Include="Structs\WinApiRectangle.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

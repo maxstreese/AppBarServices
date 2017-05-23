@@ -19,8 +19,10 @@ namespace AppBarServices
         private Window _windowToHandle;
         // The AppBarType can be either Standard or AutoHide.
         private AppBarType _appBarType;
-        // -
+        
         private bool _appBarIsRegistered;
+        // The attributes of the _windowToHandle before it became and AppBar.
+        private AppBarWindowAttributes _originalWindowAttributes;
         #endregion
 
 
@@ -66,6 +68,11 @@ namespace AppBarServices
                 {
                     if (HandleAppBarNew() == true)
                     {
+                        SaveRestoreOriginalWindowAttributes(doSave: true);
+
+                        _windowToHandle.WindowStyle = WindowStyle.None;
+                        _windowToHandle.ResizeMode = ResizeMode.NoResize;
+
                         HandleAppBarQueryPosSetPos(screenEdge, margin);
                     }
                     else
@@ -99,6 +106,7 @@ namespace AppBarServices
             if (_appBarIsRegistered)
             {
                 HandleAppBarRemove();
+                SaveRestoreOriginalWindowAttributes(doSave: false);
             }
 
             // *** There could and maybe should be some more code here: ***
@@ -110,7 +118,7 @@ namespace AppBarServices
         #endregion
 
 
-        #region Private Methods
+        #region Methods to encapsulate the communication with the operating system
         // Processes window messages send by the operating system. This is a callback function that requires a hook on the
         // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
         // and removed upon removal of the AppBar.
@@ -225,6 +233,31 @@ namespace AppBarServices
             windowSource.RemoveHook(new HwndSourceHook(WindowProc));
 
             _appBarIsRegistered = false;
+        }
+        #endregion
+
+
+        #region Helper Methods
+        private void SaveRestoreOriginalWindowAttributes(bool doSave)
+        {
+            if (doSave)
+            {
+                _originalWindowAttributes.top = _windowToHandle.Top;
+                _originalWindowAttributes.height = _windowToHandle.Height;
+                _originalWindowAttributes.left = _windowToHandle.Left;
+                _originalWindowAttributes.width = _windowToHandle.Width;
+                _originalWindowAttributes.windowStyle = _windowToHandle.WindowStyle;
+                _originalWindowAttributes.resizeMode = _windowToHandle.ResizeMode;
+            }
+            else
+            {
+                _windowToHandle.Top = _originalWindowAttributes.top;
+                _windowToHandle.Height = _originalWindowAttributes.height;
+                _windowToHandle.Left = _originalWindowAttributes.left;
+                _windowToHandle.Width = _originalWindowAttributes.width;
+                _windowToHandle.WindowStyle = _originalWindowAttributes.windowStyle;
+                _windowToHandle.ResizeMode = _originalWindowAttributes.resizeMode;
+            }
         }
         #endregion
 
