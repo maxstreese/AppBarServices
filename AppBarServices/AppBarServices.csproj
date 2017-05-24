@@ -44,12 +44,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppBarHandler.cs" />
+    <Compile Include="Enums\MonitorFromRectOnNoIntersection.cs" />
     <Compile Include="Enums\NotificationIdentifier.cs" />
     <Compile Include="Enums\MessageIdentifier.cs" />
     <Compile Include="Enums\ScreenEdge.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Structs\AppBarData.cs" />
     <Compile Include="Structs\AppBarAttributes.cs" />
+    <Compile Include="Structs\MonitorInfoData.cs" />
     <Compile Include="Structs\WPFWindowAttributes.cs" />
     <Compile Include="Structs\WinApiRectangle.cs" />
   </ItemGroup>

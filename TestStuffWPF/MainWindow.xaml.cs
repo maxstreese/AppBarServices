@@ -93,8 +93,7 @@ namespace TestStuffWPF
 
         private void btnStuffA_Click(object sender, RoutedEventArgs e)
         {
-            this.Left = 1;
-            this.Top = 0;
+            _appBarHandler.HandleGetMonitorInfoFromRect();
         }
 
         private void btnStuffB_Click(object sender, RoutedEventArgs e)

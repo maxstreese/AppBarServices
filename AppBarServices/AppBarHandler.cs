@@ -138,22 +138,31 @@ namespace AppBarServices
         #endregion
 
 
-        #region Methods to encapsulate the communication with the operating system
-        // Processes window messages send by the operating system. This is a callback function that requires a hook on the
-        // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
-        // and removed upon removal of the AppBar. This is the implementation of the placeholder function named WindowProc
-        // (use that name to look it up in the microsoft docs).
-        private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        #region Methods to encapsulate the interaction with the operating system
+        // Testing ...
+        public void HandleGetMonitorInfoFromRect()
         {
-            if (uMsg == _callbackID)
+            WinApiRectangle testRectangle = new WinApiRectangle();
+            testRectangle.left = 10;
+            testRectangle.top = 10;
+            testRectangle.right = 20;
+            testRectangle.bottom = 20;
+
+            IntPtr monitorHandle;
+
+            MonitorInfoData monitorInfoData = new MonitorInfoData();
+            monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
+
+            monitorHandle = MonitorFromRect(ref testRectangle, (int)MonitorFromRectOnNoIntersection.MONITOR_DEFAULTTONULL);
+            if (monitorHandle != IntPtr.Zero)
             {
-                if (wParam.ToInt32() == (int)NotificationIdentifier.ABN_POSCHANGED)
+                bool functionFunctioned;
+                functionFunctioned = GetMonitorInfo(monitorHandle, ref monitorInfoData);
+                if (functionFunctioned)
                 {
-                    HandleAppBarQueryPosSetPos();
-                    handled = true;
+                    System.Diagnostics.Debug.Print("dwFlags: {0}", monitorInfoData.dwFlags.ToString());
                 }
             }
-            return IntPtr.Zero;
         }
 
         // Registers the AppBar with the operating system (i.e. calls SHAppBarData with the MessageIdentifier ABM_NEW).
@@ -263,6 +272,23 @@ namespace AppBarServices
 
             _currentAppBarAttributes.isRegistered = false;
         }
+
+        // Processes window messages send by the operating system. This is a callback function that requires a hook on the
+        // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
+        // and removed upon removal of the AppBar. This is the implementation of the placeholder function named WindowProc
+        // (use that name to look it up in the microsoft docs).
+        private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        {
+            if (uMsg == _callbackID)
+            {
+                if (wParam.ToInt32() == (int)NotificationIdentifier.ABN_POSCHANGED)
+                {
+                    HandleAppBarQueryPosSetPos();
+                    handled = true;
+                }
+            }
+            return IntPtr.Zero;
+        }
         #endregion
 
 
@@ -304,6 +330,16 @@ namespace AppBarServices
         // This function is needed in order for the AppBar to be able to receive notifications from the operating system.
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
         private static extern uint RegisterWindowMessage(string msg);
+
+        // Retrieves information about a display monitor and stores that information in a 'MonitorInfoData' struct.
+        // This function is needed to place the AppBar properly on multiple display setups.
+        [DllImport("User32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MonitorInfoData lpmi);
+
+        // Retrieves a handle to the display monitor that has the largest area of intersection with a specified rectangle.
+        // This function is used to get the monitor handle for the 'GetMonitorInfo' function.
+        [DllImport("User32.dll")]
+        private static extern IntPtr MonitorFromRect(ref WinApiRectangle lprc, int dwFlags);
         #endregion
     }
 }
