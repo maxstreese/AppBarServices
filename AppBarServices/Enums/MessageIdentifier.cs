@@ -20,7 +20,7 @@ namespace AppBarServices.Enums
         // third party objects (e.g. other AppBars). To retrieve the area of the screen not covered by both the taskbar and other app bars
         // use the GetMonitorInfo function.
         ABM_GETTASKBARPOS,
-        // Notifies the system to activate or deactivate an appbar. The lParam member of the APPBARDATA pointed to by pData is set to TRUE 
+        // Notifies the system to activate or deactivate an appbar. The lParam member of the APPBARDATA pointed to by pData is set to TRUE
         // to activate or FALSE to deactivate.
         ABM_ACTIVATE,
         // Retrieves the handle to the autohide appbar associated with a particular edge of the screen.

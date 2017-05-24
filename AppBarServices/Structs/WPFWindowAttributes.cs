@@ -1,12 +1,12 @@
-﻿// The struct 'AppBarWindowAttributes' holds the values of all attributes of the handled window that
+﻿// The struct 'WPFWindowAttributes' holds the values of all attributes of the handled window that
 // change when the window becomes an AppBar and should be restored to their original state once the
-// window becomes a standard window again (unregisters as an AppBar). 
+// window becomes a standard window again (unregisters as an AppBar).
 
 using System.Windows;
 
 namespace AppBarServices.Structs
 {
-    internal struct AppBarWindowAttributes
+    internal struct WPFWindowAttributes
     {
         internal double top;
         internal double height;
@@ -14,5 +14,6 @@ namespace AppBarServices.Structs
         internal double width;
         internal WindowStyle windowStyle;
         internal ResizeMode resizeMode;
+        internal WindowState windowState;
     }
 }

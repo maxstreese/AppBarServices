@@ -1,6 +1,8 @@
 ﻿// The class 'AppBarHandler' implements all of the logic of 'AppBarServices'. It is the only class defined with the public modifier
 // and its intended use is for a WPF window to define it as a member and call its public methods in order to implement an AppBar. 
 
+using System.Diagnostics;
+
 using System;
 using System.Windows;
 using System.Windows.Interop;
@@ -18,20 +20,18 @@ namespace AppBarServices
         private int _callbackID;
         // The window which the AppBarHandler is handling.
         private Window _windowToHandle;
-        // The AppBarType can be either Standard or AutoHide.
-        private AppBarType _appBarType;
-        
-        private bool _appBarIsRegistered;
         // The attributes of the _windowToHandle before it became and AppBar.
-        private AppBarWindowAttributes _originalWindowAttributes;
+        private WPFWindowAttributes _originalWindowAttributes;
+        // The attributes of the AppBar. This should always represent the current attributes.
+        private AppBarAttributes _currentAppBarAttributes;
         #endregion
 
 
         #region Properties
         // Encapsulates _appBarType.
-        public AppBarType AppBarType
+        public bool AppBarIsAutoHide
         {
-            get { return _appBarType; }
+            get { return _currentAppBarAttributes.isAutoHide; }
             // Ideally the AppBarType can be changed by the caller at any time.
             set { throw new NotImplementedException(); }
         }
@@ -40,10 +40,10 @@ namespace AppBarServices
         {
             get { return _callbackID; }
         }
-        // Encapsulates _appBarIsRegistered.
+        // Encapsulates _currentAppBarAttributes.isRegistered.
         public bool AppBarIsRegistered
         {
-            get { return _appBarIsRegistered; }
+            get { return _currentAppBarAttributes.isRegistered; }
         }
         #endregion
 
@@ -61,20 +61,28 @@ namespace AppBarServices
 
         #region Public Methods
         // Registers the WindowToHandle as an AppBar and places it to the specified position.
-        public bool PlaceAppBar(AppBarType appBarType, ScreenEdge screenEdge, double margin)
+        public bool PlaceAppBar(bool isAutoHide, ScreenEdge screenEdge, double margin)
         {
-            if (!_appBarIsRegistered)
+            if (!_currentAppBarAttributes.isRegistered)
             {
-                if (appBarType == AppBarType.Standard)
+                _currentAppBarAttributes.isAutoHide = isAutoHide;
+
+                if (!_currentAppBarAttributes.isAutoHide)
                 {
                     if (HandleAppBarNew() == true)
                     {
                         SaveRestoreOriginalWindowAttributes(doSave: true);
 
+                        // The AppBar should have no borders at all.
                         _windowToHandle.WindowStyle = WindowStyle.None;
                         _windowToHandle.ResizeMode = ResizeMode.NoResize;
+                        // Trying to move the _windowToHandle while it is in the maximized state doesn't work.
+                        _windowToHandle.WindowState = WindowState.Normal;
 
-                        HandleAppBarQueryPosSetPos(screenEdge, margin);
+                        _currentAppBarAttributes.screenEdge = screenEdge;
+                        _currentAppBarAttributes.margin = margin;
+
+                        HandleAppBarQueryPosSetPos();
                     }
                     else
                     {
@@ -83,14 +91,7 @@ namespace AppBarServices
                 }
                 else
                 {
-                    if (appBarType == AppBarType.AutoHide)
-                    {
-                        throw new NotImplementedException();
-                    }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
+                    throw new NotImplementedException();
                 }
             }
 
@@ -101,10 +102,28 @@ namespace AppBarServices
             return true;
         }
 
+        // Moves _windowToHandle if it is already an AppBar
+        public bool MoveAppBar(ScreenEdge screenEdge, double margin)
+        {
+            if (_currentAppBarAttributes.isRegistered)
+            {
+                _currentAppBarAttributes.screenEdge = screenEdge;
+                _currentAppBarAttributes.margin = margin;
+
+                HandleAppBarQueryPosSetPos();
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         // Removes the AppBar and sets the WindowToHandle back to its position before it became an AppBar.
         public bool RemoveAppBar()
         {
-            if (_appBarIsRegistered)
+            if (_currentAppBarAttributes.isRegistered)
             {
                 HandleAppBarRemove();
                 SaveRestoreOriginalWindowAttributes(doSave: false);
@@ -122,9 +141,18 @@ namespace AppBarServices
         #region Methods to encapsulate the communication with the operating system
         // Processes window messages send by the operating system. This is a callback function that requires a hook on the
         // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
-        // and removed upon removal of the AppBar.
-        private IntPtr WindowProc(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
+        // and removed upon removal of the AppBar. This is the implementation of the placeholder function named WindowProc
+        // (use that name to look it up in the microsoft docs).
+        private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
+            if (uMsg == _callbackID)
+            {
+                if (wParam.ToInt32() == (int)NotificationIdentifier.ABN_POSCHANGED)
+                {
+                    HandleAppBarQueryPosSetPos();
+                    handled = true;
+                }
+            }
             return IntPtr.Zero;
         }
 
@@ -149,14 +177,14 @@ namespace AppBarServices
 
             // Since the AppBar is now registered, it must receive certain notifications and handle them via WindowProc.
             // Therefore a hook is added to the HwndSource object of the WPF window.
-            windowSource.AddHook(new HwndSourceHook(WindowProc));
+            windowSource.AddHook(new HwndSourceHook(ProcessWinApiMessages));
 
-            _appBarIsRegistered = true;
+            _currentAppBarAttributes.isRegistered = true;
             return true;
         }
 
         // Works out the position of the AppBar and reserves the space (i.e. calls SHAppBarData with the MessageIdentifiers ABM_QUERYPOS and ABM_SETPOS).
-        private void HandleAppBarQueryPosSetPos(ScreenEdge screenEdge, double margin)
+        private void HandleAppBarQueryPosSetPos()
         {
             // Setting up the HwndSource object (Win32 representation of a WPF window) based on the _windowToHandle field.
             WindowInteropHelper windowHelper = new WindowInteropHelper(_windowToHandle);
@@ -166,37 +194,37 @@ namespace AppBarServices
             AppBarData appBarData = new AppBarData();
             appBarData.cbSize = Marshal.SizeOf(appBarData);
             appBarData.hWnd = windowSource.Handle;
-            appBarData.uEdge = (int)screenEdge;
+            appBarData.uEdge = (int)_currentAppBarAttributes.screenEdge;
 
-            // Specify the dimensions of the AppBar based on the 'screenEdge' and 'margin' parameters.
-            if (screenEdge == ScreenEdge.Left || screenEdge == ScreenEdge.Right)
+            // Specify the dimensions of the AppBar based on the '_currentAppBarAttributes.screenEdge' and '_currentAppBarAttributes.margin' values.
+            if (_currentAppBarAttributes.screenEdge == ScreenEdge.Left || _currentAppBarAttributes.screenEdge == ScreenEdge.Right)
             {
                 appBarData.rc.top = 0;
                 appBarData.rc.bottom = (int)SystemParameters.PrimaryScreenHeight;
-                if (screenEdge == ScreenEdge.Left)
+                if (_currentAppBarAttributes.screenEdge == ScreenEdge.Left)
                 {
                     appBarData.rc.left = 0;
-                    appBarData.rc.right = (int)(SystemParameters.PrimaryScreenWidth * margin);
+                    appBarData.rc.right = (int)(SystemParameters.PrimaryScreenWidth * _currentAppBarAttributes.margin);
                 }
                 else
                 {
                     appBarData.rc.right = (int)SystemParameters.PrimaryScreenWidth;
-                    appBarData.rc.left = (int)(SystemParameters.PrimaryScreenWidth * (1 - margin));
+                    appBarData.rc.left = (int)(SystemParameters.PrimaryScreenWidth * (1 - _currentAppBarAttributes.margin));
                 }
             }
             else
             {
                 appBarData.rc.left = 0;
                 appBarData.rc.right = (int)SystemParameters.PrimaryScreenWidth;
-                if (screenEdge == ScreenEdge.Top)
+                if (_currentAppBarAttributes.screenEdge == ScreenEdge.Top)
                 {
                     appBarData.rc.top = 0;
-                    appBarData.rc.bottom = (int)(SystemParameters.PrimaryScreenHeight * margin);
+                    appBarData.rc.bottom = (int)(SystemParameters.PrimaryScreenHeight * _currentAppBarAttributes.margin);
                 }
                 else
                 {
                     appBarData.rc.bottom = (int)SystemParameters.PrimaryScreenHeight;
-                    appBarData.rc.top = (int)(SystemParameters.PrimaryScreenHeight * (1 - margin));
+                    appBarData.rc.top = (int)(SystemParameters.PrimaryScreenHeight * (1 - _currentAppBarAttributes.margin));
                 }
             }
 
@@ -231,9 +259,9 @@ namespace AppBarServices
 
             // Since the AppBar is not registered any longer, no messages from the operating system should receive special treatment anymore.
             // Therefore the hook is removed from the HwndSource object of the WPF window.
-            windowSource.RemoveHook(new HwndSourceHook(WindowProc));
+            windowSource.RemoveHook(new HwndSourceHook(ProcessWinApiMessages));
 
-            _appBarIsRegistered = false;
+            _currentAppBarAttributes.isRegistered = false;
         }
         #endregion
 
@@ -249,6 +277,7 @@ namespace AppBarServices
                 _originalWindowAttributes.width = _windowToHandle.Width;
                 _originalWindowAttributes.windowStyle = _windowToHandle.WindowStyle;
                 _originalWindowAttributes.resizeMode = _windowToHandle.ResizeMode;
+                _originalWindowAttributes.windowState = _windowToHandle.WindowState;
             }
             else
             {
@@ -258,6 +287,7 @@ namespace AppBarServices
                 _windowToHandle.Width = _originalWindowAttributes.width;
                 _windowToHandle.WindowStyle = _originalWindowAttributes.windowStyle;
                 _windowToHandle.ResizeMode = _originalWindowAttributes.resizeMode;
+                _windowToHandle.WindowState = _originalWindowAttributes.windowState;
             }
         }
         #endregion

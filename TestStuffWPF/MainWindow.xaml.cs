@@ -24,7 +24,7 @@ namespace TestStuffWPF
     public partial class MainWindow : Window
     {
         AppBarHandler _appBarHandler;
-        double _appBarMargin = 0.25;
+        double _appBarMargin = 0.1;
 
         public MainWindow()
         {
@@ -35,12 +35,26 @@ namespace TestStuffWPF
 
         private void btnPlaceTop_Click(object sender, RoutedEventArgs e)
         {
-            _appBarHandler.PlaceAppBar(AppBarType.Standard, ScreenEdge.Top, _appBarMargin);
+            if (_appBarHandler.AppBarIsRegistered == false)
+            {
+                _appBarHandler.PlaceAppBar(false, ScreenEdge.Top, _appBarMargin);
+            }
+            else
+            {
+                _appBarHandler.MoveAppBar(ScreenEdge.Top, _appBarMargin);
+            }
         }
 
         private void btnPlaceLeft_Click(object sender, RoutedEventArgs e)
         {
-            _appBarHandler.PlaceAppBar(AppBarType.Standard, ScreenEdge.Left, _appBarMargin);
+            if (_appBarHandler.AppBarIsRegistered == false)
+            {
+                _appBarHandler.PlaceAppBar(false, ScreenEdge.Left, _appBarMargin);
+            }
+            else
+            {
+                _appBarHandler.MoveAppBar(ScreenEdge.Left, _appBarMargin);
+            }
         }
 
         private void btnRemove_Click(object sender, RoutedEventArgs e)
@@ -50,12 +64,26 @@ namespace TestStuffWPF
 
         private void btnPlaceRight_Click(object sender, RoutedEventArgs e)
         {
-            _appBarHandler.PlaceAppBar(AppBarType.Standard, ScreenEdge.Right, _appBarMargin);
+            if (_appBarHandler.AppBarIsRegistered == false)
+            {
+                _appBarHandler.PlaceAppBar(false, ScreenEdge.Right, _appBarMargin);
+            }
+            else
+            {
+                _appBarHandler.MoveAppBar(ScreenEdge.Right, _appBarMargin);
+            }
         }
 
         private void btnPlaceBottom_Click(object sender, RoutedEventArgs e)
         {
-            _appBarHandler.PlaceAppBar(AppBarType.Standard, ScreenEdge.Bottom, _appBarMargin);
+            if (_appBarHandler.AppBarIsRegistered == false)
+            {
+                _appBarHandler.PlaceAppBar(false, ScreenEdge.Bottom, _appBarMargin);
+            }
+            else
+            {
+                _appBarHandler.MoveAppBar(ScreenEdge.Bottom, _appBarMargin);
+            }
         }
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
