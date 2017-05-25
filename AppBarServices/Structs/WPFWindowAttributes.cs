@@ -17,10 +17,10 @@ namespace AppBarServices.Structs
         internal double windowLeft;
         internal double windowWidth;
 
-        internal int screenTop;
-        internal int screenLeft;
-        internal int screenHeight;
-        internal int screenWidth;
+        internal int monitorTop;
+        internal int monitorLeft;
+        internal int monitorHeight;
+        internal int monitorWidth;
 
         internal WindowStyle windowStyle;
         internal ResizeMode resizeMode;

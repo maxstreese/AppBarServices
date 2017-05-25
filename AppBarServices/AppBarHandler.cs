@@ -142,14 +142,8 @@ namespace AppBarServices
 
         #region Methods to encapsulate the interaction with the operating system
         // Testing ...
-        internal MonitorInfoData HandleGetMonitorInfoFromRect()
+        internal MonitorInfoData HandleGetMonitorInfoFromRect(WinApiRectangle windowRectangle)
         {
-            WinApiRectangle windowRectangle = new WinApiRectangle();
-            windowRectangle.left = (int)_originalWindowAttributes.windowLeft;
-            windowRectangle.top = (int)_originalWindowAttributes.windowTop;
-            windowRectangle.right = (int)(_originalWindowAttributes.windowLeft + _originalWindowAttributes.windowWidth);
-            windowRectangle.bottom = (int)(_originalWindowAttributes.windowTop + _originalWindowAttributes.windowHeight);
-
             MonitorInfoData monitorInfoData = new MonitorInfoData();
             monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
 
@@ -200,35 +194,46 @@ namespace AppBarServices
             appBarData.hWnd = windowSource.Handle;
             appBarData.uEdge = (int)_currentAppBarAttributes.screenEdge;
 
+            // ...
+            WinApiRectangle windowRectangle = new WinApiRectangle();
+            windowRectangle.left = (int)_windowToHandle.Left;
+            windowRectangle.top = (int)_windowToHandle.Top;
+            windowRectangle.right = (int)(_windowToHandle.Left + _windowToHandle.Width);
+            windowRectangle.bottom = (int)(_windowToHandle.Top + _windowToHandle.Height);
+            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
+
+            int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
+            int currentMonitorWidth = currentMonitor.rcMonitor.right - currentMonitor.rcMonitor.left;
+
             // Specify the dimensions of the AppBar based on the '_currentAppBarAttributes.screenEdge' and '_currentAppBarAttributes.margin' values.
             if (_currentAppBarAttributes.screenEdge == ScreenEdge.Left || _currentAppBarAttributes.screenEdge == ScreenEdge.Right)
             {
-                appBarData.rc.top = 0;
-                appBarData.rc.bottom = (int)SystemParameters.PrimaryScreenHeight;
+                appBarData.rc.top = currentMonitor.rcMonitor.top;
+                appBarData.rc.bottom = currentMonitor.rcMonitor.bottom;
                 if (_currentAppBarAttributes.screenEdge == ScreenEdge.Left)
                 {
-                    appBarData.rc.left = 0;
-                    appBarData.rc.right = (int)(SystemParameters.PrimaryScreenWidth * _currentAppBarAttributes.margin);
+                    appBarData.rc.left = currentMonitor.rcMonitor.left;
+                    appBarData.rc.right = currentMonitor.rcMonitor.left + (int)(currentMonitorWidth * _currentAppBarAttributes.margin);
                 }
                 else
                 {
-                    appBarData.rc.right = (int)SystemParameters.PrimaryScreenWidth;
-                    appBarData.rc.left = (int)(SystemParameters.PrimaryScreenWidth * (1 - _currentAppBarAttributes.margin));
+                    appBarData.rc.right = currentMonitor.rcMonitor.right;
+                    appBarData.rc.left = currentMonitor.rcMonitor.right - (int)(currentMonitorWidth * _currentAppBarAttributes.margin);
                 }
             }
             else
             {
-                appBarData.rc.left = 0;
-                appBarData.rc.right = (int)SystemParameters.PrimaryScreenWidth;
+                appBarData.rc.left = currentMonitor.rcMonitor.left;
+                appBarData.rc.right = currentMonitor.rcMonitor.right;
                 if (_currentAppBarAttributes.screenEdge == ScreenEdge.Top)
                 {
-                    appBarData.rc.top = 0;
-                    appBarData.rc.bottom = (int)(SystemParameters.PrimaryScreenHeight * _currentAppBarAttributes.margin);
+                    appBarData.rc.top = currentMonitor.rcMonitor.top;
+                    appBarData.rc.bottom = currentMonitor.rcMonitor.top + (int)(currentMonitorHeight * _currentAppBarAttributes.margin);
                 }
                 else
                 {
-                    appBarData.rc.bottom = (int)SystemParameters.PrimaryScreenHeight;
-                    appBarData.rc.top = (int)(SystemParameters.PrimaryScreenHeight * (1 - _currentAppBarAttributes.margin));
+                    appBarData.rc.bottom = currentMonitor.rcMonitor.bottom;
+                    appBarData.rc.top = currentMonitor.rcMonitor.bottom - (int)(currentMonitorHeight * _currentAppBarAttributes.margin);
                 }
             }
 
@@ -272,6 +277,9 @@ namespace AppBarServices
         // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
         // and removed upon removal of the AppBar. This is the implementation of the placeholder function named WindowProc
         // (use that name to look it up in the microsoft docs).
+
+        private int wtfWhy;
+        
         private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (uMsg == _callbackID)
@@ -280,6 +288,9 @@ namespace AppBarServices
                 {
                     HandleAppBarQueryPosSetPos();
                     handled = true;
+
+                    wtfWhy += 1;
+                    System.Diagnostics.Debug.Print("ABN_POSCHANGED {0}", wtfWhy);
                 }
             }
             return IntPtr.Zero;
@@ -300,31 +311,44 @@ namespace AppBarServices
                 _originalWindowAttributes.windowStyle = _windowToHandle.WindowStyle;
                 _originalWindowAttributes.resizeMode = _windowToHandle.ResizeMode;
                 _originalWindowAttributes.windowState = _windowToHandle.WindowState;
+                
+                WinApiRectangle windowRectangle = new WinApiRectangle();
+                windowRectangle.left = (int)_originalWindowAttributes.windowLeft;
+                windowRectangle.top = (int)_originalWindowAttributes.windowTop;
+                windowRectangle.right = (int)(_originalWindowAttributes.windowLeft + _originalWindowAttributes.windowWidth);
+                windowRectangle.bottom = (int)(_originalWindowAttributes.windowTop + _originalWindowAttributes.windowHeight);
+                MonitorInfoData originalMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
 
-                // It is important to set the windowTop, -Height, -Left and -Width attributes of _originalWindowAttributes
-                // before calling the HandleGetMonitorInfoFromRect function. Because those attributes are used to create
-                // the Rect for that function.
-                MonitorInfoData originalMonitor = HandleGetMonitorInfoFromRect();
-                _originalWindowAttributes.screenTop = originalMonitor.rcMonitor.top;
-                _originalWindowAttributes.screenHeight = originalMonitor.rcMonitor.bottom - originalMonitor.rcMonitor.top;
-                _originalWindowAttributes.screenLeft = originalMonitor.rcMonitor.left;
-                _originalWindowAttributes.screenWidth = originalMonitor.rcMonitor.right - originalMonitor.rcMonitor.left;
+                _originalWindowAttributes.monitorTop = originalMonitor.rcMonitor.top;
+                _originalWindowAttributes.monitorHeight = originalMonitor.rcMonitor.bottom - originalMonitor.rcMonitor.top;
+                _originalWindowAttributes.monitorLeft = originalMonitor.rcMonitor.left;
+                _originalWindowAttributes.monitorWidth = originalMonitor.rcMonitor.right - originalMonitor.rcMonitor.left;
             }
             else
             {
-                MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect();
+                // Get the MonitorInfoData for the monitor where the handled window will be placed after it unregisters
+                // as an AppBar. In case the monitor the window came from before it registered does still exist, that
+                // monitor will be returned. Otherwise the currentMonitor will default to the primary monitor.
+                WinApiRectangle windowRectangle = new WinApiRectangle();
+                windowRectangle.left = (int)_originalWindowAttributes.windowLeft;
+                windowRectangle.top = (int)_originalWindowAttributes.windowTop;
+                windowRectangle.right = (int)(_originalWindowAttributes.windowLeft + _originalWindowAttributes.windowWidth);
+                windowRectangle.bottom = (int)(_originalWindowAttributes.windowTop + _originalWindowAttributes.windowHeight);
+                MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
 
+                // Conversion variables needed to put the window on whichever monitor it will be put on at the same position
+                // it was at on the monitor it was on before it registered as an AppBar.
                 int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
                 int currentMonitorWidth = currentMonitor.rcMonitor.right - currentMonitor.rcMonitor.left;
-                double screenHeightFactor = (double)currentMonitorHeight / _originalWindowAttributes.screenHeight;
-                double screenWidthFactor = (double)currentMonitorWidth / _originalWindowAttributes.screenWidth;
-                double windowTopRelative = (double)((int)_originalWindowAttributes.windowTop - _originalWindowAttributes.screenTop) / _originalWindowAttributes.screenHeight;
-                double windowLeftRelative = (double)((int)_originalWindowAttributes.windowLeft - _originalWindowAttributes.screenLeft) / _originalWindowAttributes.screenWidth;
+                double monitorHeightFactor = (double)currentMonitorHeight / _originalWindowAttributes.monitorHeight;
+                double monitorWidthFactor = (double)currentMonitorWidth / _originalWindowAttributes.monitorWidth;
+                double windowTopRelative = (double)((int)_originalWindowAttributes.windowTop - _originalWindowAttributes.monitorTop) / _originalWindowAttributes.monitorHeight;
+                double windowLeftRelative = (double)((int)_originalWindowAttributes.windowLeft - _originalWindowAttributes.monitorLeft) / _originalWindowAttributes.monitorWidth;
 
                 _windowToHandle.Top = currentMonitor.rcMonitor.top + windowTopRelative * currentMonitorHeight;
-                _windowToHandle.Height = _originalWindowAttributes.windowHeight * screenHeightFactor;
+                _windowToHandle.Height = _originalWindowAttributes.windowHeight * monitorHeightFactor;
                 _windowToHandle.Left = currentMonitor.rcMonitor.left + windowLeftRelative * currentMonitorWidth;
-                _windowToHandle.Width = _originalWindowAttributes.windowWidth * screenWidthFactor;
+                _windowToHandle.Width = _originalWindowAttributes.windowWidth * monitorWidthFactor;
 
                 _windowToHandle.WindowStyle = _originalWindowAttributes.windowStyle;
                 _windowToHandle.ResizeMode = _originalWindowAttributes.resizeMode;
