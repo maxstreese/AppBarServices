@@ -80,6 +80,9 @@ namespace AppBarServices
                         _windowToHandle.ResizeMode = ResizeMode.NoResize;
                         // Trying to move the _windowToHandle while it is in the maximized state doesn't work.
                         _windowToHandle.WindowState = WindowState.Normal;
+                        // Setting the handled window to be topmost ensures that it stays in front even if it is deactivated
+                        // (pressing WIN+G does not minimize the window anymore with this set to true).
+                        _windowToHandle.Topmost = true;
 
                         _currentAppBarAttributes.screenEdge = screenEdge;
                         _currentAppBarAttributes.margin = margin;
@@ -308,6 +311,7 @@ namespace AppBarServices
                 _originalWindowAttributes.windowLeft = _windowToHandle.Left;
                 _originalWindowAttributes.windowWidth = _windowToHandle.Width;
 
+                _originalWindowAttributes.topMost = _windowToHandle.Topmost;
                 _originalWindowAttributes.windowStyle = _windowToHandle.WindowStyle;
                 _originalWindowAttributes.resizeMode = _windowToHandle.ResizeMode;
                 _originalWindowAttributes.windowState = _windowToHandle.WindowState;
@@ -350,6 +354,7 @@ namespace AppBarServices
                 _windowToHandle.Left = currentMonitor.rcMonitor.left + windowLeftRelative * currentMonitorWidth;
                 _windowToHandle.Width = _originalWindowAttributes.windowWidth * monitorWidthFactor;
 
+                _windowToHandle.Topmost = _originalWindowAttributes.topMost;
                 _windowToHandle.WindowStyle = _originalWindowAttributes.windowStyle;
                 _windowToHandle.ResizeMode = _originalWindowAttributes.resizeMode;
                 _windowToHandle.WindowState = _originalWindowAttributes.windowState;

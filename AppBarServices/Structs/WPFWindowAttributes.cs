@@ -22,6 +22,7 @@ namespace AppBarServices.Structs
         internal int monitorHeight;
         internal int monitorWidth;
 
+        internal bool topMost;
         internal WindowStyle windowStyle;
         internal ResizeMode resizeMode;
         internal WindowState windowState;
