@@ -71,6 +71,8 @@ namespace AppBarServices
                 {
                     if (HandleAppBarNew() == true)
                     {
+                        // Save all of the attributes needed to restore the window to its original position once
+                        // it unregisters as an AppBar.
                         SaveRestoreOriginalWindowAttributes(doSave: true);
 
                         // The AppBar should have no borders at all.
@@ -140,29 +142,22 @@ namespace AppBarServices
 
         #region Methods to encapsulate the interaction with the operating system
         // Testing ...
-        public void HandleGetMonitorInfoFromRect()
+        internal MonitorInfoData HandleGetMonitorInfoFromRect()
         {
-            WinApiRectangle testRectangle = new WinApiRectangle();
-            testRectangle.left = 10;
-            testRectangle.top = 10;
-            testRectangle.right = 20;
-            testRectangle.bottom = 20;
-
-            IntPtr monitorHandle;
+            WinApiRectangle windowRectangle = new WinApiRectangle();
+            windowRectangle.left = (int)_originalWindowAttributes.windowLeft;
+            windowRectangle.top = (int)_originalWindowAttributes.windowTop;
+            windowRectangle.right = (int)(_originalWindowAttributes.windowLeft + _originalWindowAttributes.windowWidth);
+            windowRectangle.bottom = (int)(_originalWindowAttributes.windowTop + _originalWindowAttributes.windowHeight);
 
             MonitorInfoData monitorInfoData = new MonitorInfoData();
             monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
 
-            monitorHandle = MonitorFromRect(ref testRectangle, (int)MonitorFromRectOnNoIntersection.MONITOR_DEFAULTTONULL);
-            if (monitorHandle != IntPtr.Zero)
-            {
-                bool functionFunctioned;
-                functionFunctioned = GetMonitorInfo(monitorHandle, ref monitorInfoData);
-                if (functionFunctioned)
-                {
-                    System.Diagnostics.Debug.Print("dwFlags: {0}", monitorInfoData.dwFlags.ToString());
-                }
-            }
+            IntPtr monitorHandle;
+            monitorHandle = MonitorFromRect(ref windowRectangle, (int)MonitorFromRectOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
+            GetMonitorInfo(monitorHandle, ref monitorInfoData);
+
+            return monitorInfoData;
         }
 
         // Registers the AppBar with the operating system (i.e. calls SHAppBarData with the MessageIdentifier ABM_NEW).
@@ -297,20 +292,40 @@ namespace AppBarServices
         {
             if (doSave)
             {
-                _originalWindowAttributes.top = _windowToHandle.Top;
-                _originalWindowAttributes.height = _windowToHandle.Height;
-                _originalWindowAttributes.left = _windowToHandle.Left;
-                _originalWindowAttributes.width = _windowToHandle.Width;
+                _originalWindowAttributes.windowTop = _windowToHandle.Top;
+                _originalWindowAttributes.windowHeight = _windowToHandle.Height;
+                _originalWindowAttributes.windowLeft = _windowToHandle.Left;
+                _originalWindowAttributes.windowWidth = _windowToHandle.Width;
+
                 _originalWindowAttributes.windowStyle = _windowToHandle.WindowStyle;
                 _originalWindowAttributes.resizeMode = _windowToHandle.ResizeMode;
                 _originalWindowAttributes.windowState = _windowToHandle.WindowState;
+
+                // It is important to set the windowTop, -Height, -Left and -Width attributes of _originalWindowAttributes
+                // before calling the HandleGetMonitorInfoFromRect function. Because those attributes are used to create
+                // the Rect for that function.
+                MonitorInfoData originalMonitor = HandleGetMonitorInfoFromRect();
+                _originalWindowAttributes.screenTop = originalMonitor.rcMonitor.top;
+                _originalWindowAttributes.screenHeight = originalMonitor.rcMonitor.bottom - originalMonitor.rcMonitor.top;
+                _originalWindowAttributes.screenLeft = originalMonitor.rcMonitor.left;
+                _originalWindowAttributes.screenWidth = originalMonitor.rcMonitor.right - originalMonitor.rcMonitor.left;
             }
             else
             {
-                _windowToHandle.Top = _originalWindowAttributes.top;
-                _windowToHandle.Height = _originalWindowAttributes.height;
-                _windowToHandle.Left = _originalWindowAttributes.left;
-                _windowToHandle.Width = _originalWindowAttributes.width;
+                MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect();
+
+                int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
+                int currentMonitorWidth = currentMonitor.rcMonitor.right - currentMonitor.rcMonitor.left;
+                double screenHeightFactor = (double)currentMonitorHeight / _originalWindowAttributes.screenHeight;
+                double screenWidthFactor = (double)currentMonitorWidth / _originalWindowAttributes.screenWidth;
+                double windowTopRelative = (double)((int)_originalWindowAttributes.windowTop - _originalWindowAttributes.screenTop) / _originalWindowAttributes.screenHeight;
+                double windowLeftRelative = (double)((int)_originalWindowAttributes.windowLeft - _originalWindowAttributes.screenLeft) / _originalWindowAttributes.screenWidth;
+
+                _windowToHandle.Top = currentMonitor.rcMonitor.top + windowTopRelative * currentMonitorHeight;
+                _windowToHandle.Height = _originalWindowAttributes.windowHeight * screenHeightFactor;
+                _windowToHandle.Left = currentMonitor.rcMonitor.left + windowLeftRelative * currentMonitorWidth;
+                _windowToHandle.Width = _originalWindowAttributes.windowWidth * screenWidthFactor;
+
                 _windowToHandle.WindowStyle = _originalWindowAttributes.windowStyle;
                 _windowToHandle.ResizeMode = _originalWindowAttributes.resizeMode;
                 _windowToHandle.WindowState = _originalWindowAttributes.windowState;

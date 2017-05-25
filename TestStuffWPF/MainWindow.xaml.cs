@@ -1,4 +1,6 @@
-﻿using System;
+﻿using System.Diagnostics;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -93,12 +95,13 @@ namespace TestStuffWPF
 
         private void btnStuffA_Click(object sender, RoutedEventArgs e)
         {
-            _appBarHandler.HandleGetMonitorInfoFromRect();
+            // ...
         }
 
         private void btnStuffB_Click(object sender, RoutedEventArgs e)
         {
-
+            System.Diagnostics.Debug.Print("WPF Left: {0}", this.Left);
+            System.Diagnostics.Debug.Print("WPF Top: {0}", this.Top);
         }
     }
 }
