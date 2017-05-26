@@ -204,6 +204,7 @@ namespace AppBarServices
             windowRectangle.bottom = (int)(_windowToHandle.Top + _windowToHandle.Height);
             MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
 
+            // Used in conjunction with _currentAppBarAttributes.margin to work out either the height or the width of the AppBar in pixels.
             int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
             int currentMonitorWidth = currentMonitor.rcMonitor.right - currentMonitor.rcMonitor.left;
 
