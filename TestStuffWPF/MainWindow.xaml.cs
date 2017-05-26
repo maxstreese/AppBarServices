@@ -26,7 +26,7 @@ namespace TestStuffWPF
     public partial class MainWindow : Window
     {
         AppBarHandler _appBarHandler;
-        double _appBarMargin = 1;
+        double _appBarMargin = 0.1;
 
         public MainWindow()
         {
