@@ -126,7 +126,7 @@ namespace AppBarServices
         }
 
         // Removes the AppBar and sets the WindowToHandle back to its position before it became an AppBar.
-        public bool RemoveAppBar()
+        public void RemoveAppBar()
         {
             if (_currentAppBarAttributes.isRegistered)
             {
@@ -137,8 +137,6 @@ namespace AppBarServices
             // *** There could and maybe should be some more code here: ***
             // Event to indicate that the AppBar has been removed.
             // ************************************************************
-
-            return true;
         }
         #endregion
 
@@ -197,7 +195,8 @@ namespace AppBarServices
             appBarData.hWnd = windowSource.Handle;
             appBarData.uEdge = (int)_currentAppBarAttributes.screenEdge;
 
-            // ...
+            // Get the rectangle information of the monitor the handled window is currently on
+            // (either as an already set AppBar or as a normal window).
             WinApiRectangle windowRectangle = new WinApiRectangle();
             windowRectangle.left = (int)_windowToHandle.Left;
             windowRectangle.top = (int)_windowToHandle.Top;
@@ -208,50 +207,73 @@ namespace AppBarServices
             int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
             int currentMonitorWidth = currentMonitor.rcMonitor.right - currentMonitor.rcMonitor.left;
 
+            WinApiRectangle desiredRectangle = new WinApiRectangle();
+
             // Specify the dimensions of the AppBar based on the '_currentAppBarAttributes.screenEdge' and '_currentAppBarAttributes.margin' values.
             if (_currentAppBarAttributes.screenEdge == ScreenEdge.Left || _currentAppBarAttributes.screenEdge == ScreenEdge.Right)
             {
-                appBarData.rc.top = currentMonitor.rcMonitor.top;
-                appBarData.rc.bottom = currentMonitor.rcMonitor.bottom;
+                desiredRectangle.top = currentMonitor.rcMonitor.top;
+                desiredRectangle.bottom = currentMonitor.rcMonitor.bottom;
+                appBarData.rc.top = desiredRectangle.top;
+                appBarData.rc.bottom = desiredRectangle.bottom;
                 if (_currentAppBarAttributes.screenEdge == ScreenEdge.Left)
                 {
-                    appBarData.rc.left = currentMonitor.rcMonitor.left;
-                    appBarData.rc.right = currentMonitor.rcMonitor.left + (int)(currentMonitorWidth * _currentAppBarAttributes.margin);
+                    desiredRectangle.left = currentMonitor.rcMonitor.left;
+                    desiredRectangle.right = currentMonitor.rcMonitor.left + (int)(currentMonitorWidth * _currentAppBarAttributes.margin);
+                    appBarData.rc.left = desiredRectangle.left;
+                    appBarData.rc.right = desiredRectangle.right;
                 }
                 else
                 {
-                    appBarData.rc.right = currentMonitor.rcMonitor.right;
-                    appBarData.rc.left = currentMonitor.rcMonitor.right - (int)(currentMonitorWidth * _currentAppBarAttributes.margin);
+                    desiredRectangle.right = currentMonitor.rcMonitor.right;
+                    desiredRectangle.left = currentMonitor.rcMonitor.right - (int)(currentMonitorWidth * _currentAppBarAttributes.margin);
+                    appBarData.rc.right = desiredRectangle.right;
+                    appBarData.rc.left = desiredRectangle.left;
                 }
             }
             else
             {
-                appBarData.rc.left = currentMonitor.rcMonitor.left;
-                appBarData.rc.right = currentMonitor.rcMonitor.right;
+                desiredRectangle.left = currentMonitor.rcMonitor.left;
+                desiredRectangle.right = currentMonitor.rcMonitor.right;
+                appBarData.rc.left = desiredRectangle.left;
+                appBarData.rc.right = desiredRectangle.right;
                 if (_currentAppBarAttributes.screenEdge == ScreenEdge.Top)
                 {
-                    appBarData.rc.top = currentMonitor.rcMonitor.top;
-                    appBarData.rc.bottom = currentMonitor.rcMonitor.top + (int)(currentMonitorHeight * _currentAppBarAttributes.margin);
+                    desiredRectangle.top = currentMonitor.rcMonitor.top;
+                    desiredRectangle.bottom = currentMonitor.rcMonitor.top + (int)(currentMonitorHeight * _currentAppBarAttributes.margin);
+                    appBarData.rc.top = desiredRectangle.top;
+                    appBarData.rc.bottom = desiredRectangle.bottom;
                 }
                 else
                 {
-                    appBarData.rc.bottom = currentMonitor.rcMonitor.bottom;
-                    appBarData.rc.top = currentMonitor.rcMonitor.bottom - (int)(currentMonitorHeight * _currentAppBarAttributes.margin);
+                    desiredRectangle.bottom = currentMonitor.rcMonitor.bottom;
+                    desiredRectangle.top = currentMonitor.rcMonitor.bottom - (int)(currentMonitorHeight * _currentAppBarAttributes.margin);
+                    appBarData.rc.bottom = desiredRectangle.bottom;
+                    appBarData.rc.top = desiredRectangle.top;
                 }
             }
 
-            // Call the SHAppBarMessage function to first query the position where the AppBar should go an then based on the updated
-            // appBarData parameter set the position (reserve it).
-            uint testTrue;
-            testTrue = SHAppBarMessage((int)MessageIdentifier.ABM_QUERYPOS, ref appBarData);
-            testTrue = SHAppBarMessage((int)MessageIdentifier.ABM_SETPOS, ref appBarData);
+            // Query the position where the AppBar should go and let the operating system adjust it for any obstacles.
+            // Then take the adjusted values and correct them to represent the desired width or height value
+            // (depending on the defined screen edge).
+            SHAppBarMessage((int)MessageIdentifier.ABM_QUERYPOS, ref appBarData);
+            AdjustQueriedAppBarDataRectangle(ref appBarData, desiredRectangle, currentMonitor);
 
-            // Move and size the AppBar to fit the bounding rectangle passed to the operating system by the last call to the 
-            // SHAppBarMessage function. I guess this wont work because the space I want to move to is reserved?.
-            _windowToHandle.Top = appBarData.rc.top;
-            _windowToHandle.Left = appBarData.rc.left;
-            _windowToHandle.Width = appBarData.rc.right - appBarData.rc.left;
-            _windowToHandle.Height = appBarData.rc.bottom - appBarData.rc.top;
+            // Reserve the position for the AppBar and then check if the position set by the operating system is equal in
+            // width or height (depending on the defined screen edge) to the desired width or height value. If that is the
+            // case place the WPF window to that position. If it isn't remove the AppBar.
+            SHAppBarMessage((int)MessageIdentifier.ABM_SETPOS, ref appBarData);
+            if (AppBarDataRectangleIsDesired(appBarData, desiredRectangle, currentMonitor) == true)
+            {
+                _windowToHandle.Top = appBarData.rc.top;
+                _windowToHandle.Left = appBarData.rc.left;
+                _windowToHandle.Width = appBarData.rc.right - appBarData.rc.left;
+                _windowToHandle.Height = appBarData.rc.bottom - appBarData.rc.top;
+            }
+            else
+            {
+                RemoveAppBar();
+            }
         }
 
         // Removes the AppBar from the operating system.
@@ -280,8 +302,6 @@ namespace AppBarServices
         // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
         // and removed upon removal of the AppBar. This is the implementation of the placeholder function named WindowProc
         // (use that name to look it up in the microsoft docs).
-
-        private int wtfWhy;
         
         private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
@@ -291,9 +311,6 @@ namespace AppBarServices
                 {
                     HandleAppBarQueryPosSetPos();
                     handled = true;
-
-                    wtfWhy += 1;
-                    System.Diagnostics.Debug.Print("ABN_POSCHANGED {0}", wtfWhy);
                 }
             }
             return IntPtr.Zero;
@@ -359,6 +376,101 @@ namespace AppBarServices
                 _windowToHandle.ResizeMode = _originalWindowAttributes.resizeMode;
                 _windowToHandle.WindowState = _originalWindowAttributes.windowState;
             }
+        }
+
+        // After the ABM_QUERYPOS message has been send to the operating system, this method tries to adjust for any changes made by the system
+        // to the AppBarData.rc rectangle. An example for why this is needed: If the AppBar is supposed to go to the bottom of the screen and
+        // the taskbar is located there, the system will adjust the desired AppBar position so that it doesnt overlap the taskbar. It will do this
+        // by setting the bottom of the desired rectangle to the taskbar top. And leave the desired top position of the AppBar rectangle unchanged
+        // (if it doesnt overlap the taskbar as well, in that case it will be set to the taskbar top as well). This method tries to adjust this
+        // change so that the width or height (depending on the defined screen edge) value of the AppBar is unchanged by the system correction. 
+        private void AdjustQueriedAppBarDataRectangle(ref AppBarData appBarData, WinApiRectangle desiredRectangle, MonitorInfoData currentMonitor)
+        {
+            ScreenEdge screenEdge = (ScreenEdge)appBarData.uEdge;
+
+            int desiredHeight = desiredRectangle.bottom - desiredRectangle.top;
+            int desiredWidth = desiredRectangle.right - desiredRectangle.left;
+
+            switch (screenEdge)
+            {
+                case ScreenEdge.Left:
+                    appBarData.rc.right = appBarData.rc.left + desiredWidth;
+                    break;
+                case ScreenEdge.Top:
+                    appBarData.rc.bottom = appBarData.rc.top + desiredHeight;
+                    break;
+                case ScreenEdge.Right:
+                    appBarData.rc.left = appBarData.rc.right - desiredWidth;
+                    break;
+                case ScreenEdge.Bottom:
+                    appBarData.rc.top = appBarData.rc.bottom - desiredHeight;
+                    break;
+            }
+        }
+
+        // Checks if the AppBarData.rc rectangle that was set by the system when it received the ABM_SETPOS message
+        // is equal in width or height (depending on the defined screen edge) to the desired rectangle and does not
+        // violate the boundaries of the current monitor. This method is here to guarantee that only those AppBars 
+        // are placed, that do not have unwanted width or height values because the available screen space was not
+        // enough.
+        private bool AppBarDataRectangleIsDesired(AppBarData appBarData, WinApiRectangle desiredRectangle, MonitorInfoData currentMonitor)
+        {
+            ScreenEdge screenEdge = (ScreenEdge)appBarData.uEdge;
+
+            int desiredHeight = desiredRectangle.bottom - desiredRectangle.top;
+            int desiredWidth = desiredRectangle.right - desiredRectangle.left;
+            int actualHeight = appBarData.rc.bottom - appBarData.rc.top;
+            int actualWidth = appBarData.rc.right - appBarData.rc.left;
+
+            System.Diagnostics.Debug.Print("desiredHeight: {0}", desiredHeight);
+            System.Diagnostics.Debug.Print("actualHeight: {0}", actualHeight);
+            System.Diagnostics.Debug.Print("desiredWidth: {0}", desiredWidth);
+            System.Diagnostics.Debug.Print("actualWidth: {0}", actualWidth);
+
+            if (screenEdge == ScreenEdge.Left || screenEdge == ScreenEdge.Right)
+            {
+                if (desiredWidth != actualWidth)
+                {
+                    return false;
+                }
+                if (screenEdge == ScreenEdge.Left)
+                {
+                    if (appBarData.rc.right > currentMonitor.rcMonitor.right)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (appBarData.rc.left < currentMonitor.rcMonitor.left)
+                    {
+                        return false;
+                    }
+                }
+            }
+            else
+            {
+                if (desiredHeight != actualHeight)
+                {
+                    return false;
+                }
+                if (screenEdge == ScreenEdge.Top)
+                {
+                    if (appBarData.rc.bottom > currentMonitor.rcMonitor.bottom)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (appBarData.rc.top < currentMonitor.rcMonitor.top)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
         #endregion
 
