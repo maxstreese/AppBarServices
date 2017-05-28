@@ -95,12 +95,12 @@ namespace TestStuffWPF
 
         private void btnStuffA_Click(object sender, RoutedEventArgs e)
         {
-            _appBarHandler.PlaceAppBar(true, ScreenEdge.Top, _appBarMargin);
+            
         }
 
         private void btnStuffB_Click(object sender, RoutedEventArgs e)
         {
-            _appBarHandler.TestToggle();
+            
         }
     }
 }
