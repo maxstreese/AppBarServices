@@ -24,6 +24,6 @@ namespace AppBarServices.Structs
         //    This information can be retrieved through the GetMonitorInfo function.
         internal WinApiRectangle rc;
         // A message-dependent value. This member is used with these messages: ABM_SETAUTOHIDEBAR, ABM_SETAUTOHIDEBAREX, ABM_SETSTATE
-        internal IntPtr lParam;
+        internal int lParam;
     }
 }

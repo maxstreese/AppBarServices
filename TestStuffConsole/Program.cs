@@ -10,14 +10,42 @@ namespace TestStuffConsole
     {
         static void Main(string[] args)
         {
-            MyClass.AnInt = 2;
-            Console.WriteLine(MyClass.AnInt);
-            MyClass.AnInt = 4;
-            Console.WriteLine(MyClass.AnInt);
+            OuterClass outerClass = new OuterClass();
+            outerClass.FireOuterEvent();
+            System.Console.ReadLine();
+
         }
     }
-    public static class MyClass
+    public class OuterClass
     {
-        public static int AnInt { get; set; }
+        public InnerClass _innerClass;
+
+        public delegate void OuterEvent();
+        public event OuterEvent outerEvent;
+
+        public OuterClass()
+        {
+            _innerClass = new InnerClass(this);
+        }
+
+        public void FireOuterEvent()
+        {
+            outerEvent.Invoke();
+        }
+    }
+    public class InnerClass
+    {
+        private OuterClass _caller;
+
+        public InnerClass(OuterClass caller)
+        {
+            _caller = caller;
+            _caller.outerEvent += _caller_outerEvent;
+        }
+
+        private void _caller_outerEvent()
+        {
+            Console.WriteLine("It worked!");
+        }
     }
 }

@@ -8,7 +8,8 @@ namespace AppBarServices.Structs
     internal struct AppBarAttributes
     {
         internal bool isAutoHide;
-        internal bool isRegistered;
+        internal bool isRegisteredStandard;
+        internal bool isRegisteredAutoHide;
         internal ScreenEdge screenEdge;
         internal double margin;
     }

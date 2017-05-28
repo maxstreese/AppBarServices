@@ -95,13 +95,12 @@ namespace TestStuffWPF
 
         private void btnStuffA_Click(object sender, RoutedEventArgs e)
         {
-            // ...
+            _appBarHandler.PlaceAppBar(true, ScreenEdge.Top, _appBarMargin);
         }
 
         private void btnStuffB_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Debug.Print("WPF Left: {0}", this.Left);
-            System.Diagnostics.Debug.Print("WPF Top: {0}", this.Top);
+            _appBarHandler.TestToggle();
         }
     }
 }

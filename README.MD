@@ -37,3 +37,4 @@ _to be added_
 * [Attaching to WndProc in WPF](http://blog.andreweichacker.com/2010/02/attaching-to-wndproc-in-wpf/)
 * [GetMonitorInfo Function](https://msdn.microsoft.com/de-de/library/windows/desktop/dd144901(v=vs.85).aspx)
 * [MonitorFromRect Function](https://msdn.microsoft.com/de-de/library/windows/desktop/dd145063(v=vs.85).aspx)
+* [Microsoft AppBar Example](https://github.com/Microsoft/Windows-classic-samples/tree/master/Samples/Win7Samples/winui/shell/legacysamples/appbar)
