@@ -95,13 +95,13 @@ namespace AppBarServices
                     // Save all of the attributes needed to restore the window to its original position once
                     // it unregisters as an AppBar.
                     SaveRestoreOriginalWindowAttributes(doSave: true);
-
-                    // Set the AppBarAttributes that are needed for both, a normal as well as an AutoHide AppBar.
+                    
                     _currentAppBarAttributes.screenEdge = screenEdge;
-                    _currentAppBarAttributes.visibleMargin = visibleMargin;
 
                     if (!isAutoHide)
                     {
+                        _currentAppBarAttributes.visibleMargin = visibleMargin;
+
                         if (!HandleAppBarQueryPosSetPos(doHide: false))
                         {
                             RemoveAppBar();
@@ -112,6 +112,8 @@ namespace AppBarServices
                     {
                         if (HandleSetAutoHideBarEx(doRegister: true))
                         {
+                            _currentAppBarAttributes.hiddenMargin = hiddenMargin;
+
                             if (!HandleAppBarQueryPosSetPos(doHide: true))
                             {
                                 RemoveAppBar();
@@ -355,7 +357,7 @@ namespace AppBarServices
             {
                 if (wParam.ToInt32() == (int)NotificationIdentifier.ABN_POSCHANGED)
                 {
-                    HandleAppBarQueryPosSetPos();
+                    HandleAppBarQueryPosSetPos(doHide: _currentAppBarAttributes.isHidden);
                     handled = true;
                 }
             }

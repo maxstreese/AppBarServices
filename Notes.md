@@ -15,3 +15,9 @@
 
 ## Questions come and go
 * One question is how I have to implement all of the steps with regards to the AutoHide functionality, the other is how I can test whether it worked. "-->" There is two sides to the implementation: One, building all the functionality to talk to the operating system and two, communicating with the handled window (e.g. getting notified when the mouse is over the hidden AppBar)
+* What kind of options/behavoir should there be regarding the AutoHide-toggle? Options:
+  * When the AppBar is hidden, it will show itself again when the mouse hovers above it. It will hide itself, once the mouse leaves the window.
+  * The AppBar will only show itself when it is clicked.
+
+## Stuff to do
+* All _currentAppBarAttributes should be reset when they are no longer correct. This includes setting the margins to 0 and adding a "None" to the ScreenEdge enum. I should also ask Ralf about this.

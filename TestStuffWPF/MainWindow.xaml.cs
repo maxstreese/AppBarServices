@@ -102,5 +102,25 @@ namespace TestStuffWPF
         {
             
         }
+
+        private void Window_Activated(object sender, EventArgs e)
+        {
+            System.Diagnostics.Debug.Print("Activated");
+        }
+
+        private void Window_Deactivated(object sender, EventArgs e)
+        {
+            System.Diagnostics.Debug.Print("Deactivated");
+        }
+
+        private void Window_MouseEnter(object sender, MouseEventArgs e)
+        {
+            System.Diagnostics.Debug.Print("Entered");
+        }
+
+        private void Window_MouseLeave(object sender, MouseEventArgs e)
+        {
+            System.Diagnostics.Debug.Print("Left");
+        }
     }
 }
