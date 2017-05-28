@@ -102,11 +102,27 @@ namespace AppBarServices
 
                     if (!isAutoHide)
                     {
-                        HandleAppBarQueryPosSetPos();
+                        if (!HandleAppBarQueryPosSetPos(doHide: false))
+                        {
+                            RemoveAppBar();
+                            return false;
+                        }
                     }
                     else
                     {
-
+                        if (HandleSetAutoHideBarEx(doRegister: true))
+                        {
+                            if (!HandleAppBarQueryPosSetPos(doHide: true))
+                            {
+                                RemoveAppBar();
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            RemoveAppBar();
+                            return false;
+                        }
                     }
 
                     // The AppBar should have no borders at all.
@@ -130,24 +146,23 @@ namespace AppBarServices
         }
 
         // Moves _windowToHandle if it is already an AppBar
-        public bool MoveAppBar(ScreenEdge screenEdge, double margin)
+        public bool MoveAppBar(ScreenEdge screenEdge)
         {
             if (_currentAppBarAttributes.isRegistered)
             {
                 _currentAppBarAttributes.screenEdge = screenEdge;
-                _currentAppBarAttributes.visibleMargin = margin;
 
-                HandleAppBarQueryPosSetPos();
-            }
-            else
-            {
-                return false;
+                if (!HandleAppBarQueryPosSetPos(doHide: _currentAppBarAttributes.isHidden))
+                {
+                    RemoveAppBar();
+                    return false;
+                }
             }
 
             return true;
         }
 
-        // Removes the AppBar and sets the WindowToHandle back to its position before it became an AppBar.
+        // Removes the AppBar and sets the handled window back to the position it hade before it became an AppBar.
         public void RemoveAppBar()
         {
             if (_currentAppBarAttributes.isRegistered)
@@ -155,7 +170,7 @@ namespace AppBarServices
                 // First check if the AppBar is registered as AutoHide and if so unregister. 
                 if (_currentAppBarAttributes.isRegisteredAutoHide)
                 {
-                    HandleSetAutoHideBarX(doRegister: false);
+                    HandleSetAutoHideBarEx(doRegister: false);
                 }
 
                 // Then unregister the AppBar.
@@ -207,8 +222,9 @@ namespace AppBarServices
         }
 
         // Works out the position of the AppBar, reserves the space (i.e. calls SHAppBarData with the MessageIdentifiers ABM_QUERYPOS and ABM_SETPOS)
-        // and moves the WPF window to the reserved space.
-        private void HandleAppBarQueryPosSetPos()
+        // and moves the WPF window to the reserved space if that space has the margin expected (i.e. defined) by the caller. If successful returns
+        // true, otherwise false.
+        private bool HandleAppBarQueryPosSetPos(bool doHide)
         {
             // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
             AppBarData appBarData = new AppBarData();
@@ -231,7 +247,7 @@ namespace AppBarServices
             WinApiRectangle desiredRectangle = new WinApiRectangle();
 
             // Specify the dimensions of the AppBar based on the '_currentAppBarAttributes.screenEdge' and '_currentAppBarAttributes.margin' values.
-            SetInitialRectangle(ref appBarData, ref desiredRectangle, currentMonitor);
+            SetInitialRectangle(ref appBarData, ref desiredRectangle, currentMonitor, doHide);
 
             // Query the position where the AppBar should go and let the operating system adjust it for any obstacles.
             // Then take the adjusted values and correct them to represent the desired width or height value
@@ -241,7 +257,7 @@ namespace AppBarServices
 
             // Reserve the position for the AppBar and then check if the position set by the operating system is equal in
             // width or height (depending on the defined screen edge) to the desired width or height value. If that is the
-            // case place the WPF window to that position. If it isn't remove the AppBar.
+            // case place the WPF window to that position. If it isn't return false.
             uint testReturn;
             testReturn = SHAppBarMessage((int)MessageIdentifier.ABM_SETPOS, ref appBarData);
             if (AppBarDataRectangleIsDesired(appBarData, desiredRectangle, currentMonitor) == true)
@@ -250,11 +266,17 @@ namespace AppBarServices
                 _windowToHandle.Left = appBarData.rc.left;
                 _windowToHandle.Width = appBarData.rc.right - appBarData.rc.left;
                 _windowToHandle.Height = appBarData.rc.bottom - appBarData.rc.top;
+
+                _currentAppBarAttributes.isHidden = doHide;
             }
             else
             {
-                RemoveAppBar();
+                _currentAppBarAttributes.isHidden = false;
+                return false;
             }
+
+            // Everything went well, so return true.
+            return true;
         }
 
         // Removes the AppBar from the operating system.
@@ -271,13 +293,12 @@ namespace AppBarServices
             // Since the AppBar is not registered any longer, no messages from the operating system should receive special treatment anymore.
             // Therefore the hook is removed from the HwndSource object of the WPF window.
             _windowSource.RemoveHook(new HwndSourceHook(ProcessWinApiMessages));
-
+            
             _currentAppBarAttributes.isRegistered = false;
         }
 
-        // Registers and positions or unregisters an AutoHide AppBar (i.e. calls SHAppBarData with the MessageIdentifier ABM_SETAUTOHIDEBAREX).
-        
-        private bool HandleSetAutoHideBarX(bool doRegister)
+        // Registers or unregisters an AppBar as AutoHide (i.e. calls SHAppBarData with the MessageIdentifier ABM_SETAUTOHIDEBAREX).
+        private bool HandleSetAutoHideBarEx(bool doRegister)
         {
             // Specifying the AppBarData to be supplied to the SHAppBarMessage function part 1.
             AppBarData appBarData = new AppBarData();
@@ -405,11 +426,22 @@ namespace AppBarServices
 
         // Sets the initial values for desiredRectangle and appBarData.rc dpending on _currentAppBarAttributes.screenEdge and
         // _currentAppBarAttributes.margin.
-        private void SetInitialRectangle(ref AppBarData appBarData, ref WinApiRectangle desiredRectangle, MonitorInfoData currentMonitor)
+        private void SetInitialRectangle(ref AppBarData appBarData, ref WinApiRectangle desiredRectangle, MonitorInfoData currentMonitor, bool doHide)
         {
             // Used in conjunction with _currentAppBarAttributes.margin to work out either the height or the width of the AppBar in pixels.
             int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
             int currentMonitorWidth = currentMonitor.rcMonitor.right - currentMonitor.rcMonitor.left;
+
+            // Determine, whether the AppBar should be treated as hidden or not and set the margin to be used accordingly.
+            double margin;
+            if (doHide)
+            {
+                margin = _currentAppBarAttributes.hiddenMargin;
+            }
+            else
+            {
+                margin = _currentAppBarAttributes.visibleMargin;
+            }
 
             // Check which screen to bound the AppBar to and then set the rectangle values.
             if (_currentAppBarAttributes.screenEdge == ScreenEdge.Left || _currentAppBarAttributes.screenEdge == ScreenEdge.Right)
@@ -421,14 +453,14 @@ namespace AppBarServices
                 if (_currentAppBarAttributes.screenEdge == ScreenEdge.Left)
                 {
                     desiredRectangle.left = currentMonitor.rcMonitor.left;
-                    desiredRectangle.right = currentMonitor.rcMonitor.left + (int)(currentMonitorWidth * _currentAppBarAttributes.visibleMargin);
+                    desiredRectangle.right = currentMonitor.rcMonitor.left + (int)(currentMonitorWidth * margin);
                     appBarData.rc.left = desiredRectangle.left;
                     appBarData.rc.right = desiredRectangle.right;
                 }
                 else
                 {
                     desiredRectangle.right = currentMonitor.rcMonitor.right;
-                    desiredRectangle.left = currentMonitor.rcMonitor.right - (int)(currentMonitorWidth * _currentAppBarAttributes.visibleMargin);
+                    desiredRectangle.left = currentMonitor.rcMonitor.right - (int)(currentMonitorWidth * margin);
                     appBarData.rc.right = desiredRectangle.right;
                     appBarData.rc.left = desiredRectangle.left;
                 }
@@ -442,14 +474,14 @@ namespace AppBarServices
                 if (_currentAppBarAttributes.screenEdge == ScreenEdge.Top)
                 {
                     desiredRectangle.top = currentMonitor.rcMonitor.top;
-                    desiredRectangle.bottom = currentMonitor.rcMonitor.top + (int)(currentMonitorHeight * _currentAppBarAttributes.visibleMargin);
+                    desiredRectangle.bottom = currentMonitor.rcMonitor.top + (int)(currentMonitorHeight * margin);
                     appBarData.rc.top = desiredRectangle.top;
                     appBarData.rc.bottom = desiredRectangle.bottom;
                 }
                 else
                 {
                     desiredRectangle.bottom = currentMonitor.rcMonitor.bottom;
-                    desiredRectangle.top = currentMonitor.rcMonitor.bottom - (int)(currentMonitorHeight * _currentAppBarAttributes.visibleMargin);
+                    desiredRectangle.top = currentMonitor.rcMonitor.bottom - (int)(currentMonitorHeight * margin);
                     appBarData.rc.bottom = desiredRectangle.bottom;
                     appBarData.rc.top = desiredRectangle.top;
                 }

@@ -43,7 +43,7 @@ namespace TestStuffWPF
             }
             else
             {
-                _appBarHandler.MoveAppBar(ScreenEdge.Top, _appBarMargin);
+                _appBarHandler.MoveAppBar(ScreenEdge.Top);
             }
         }
 
@@ -55,7 +55,7 @@ namespace TestStuffWPF
             }
             else
             {
-                _appBarHandler.MoveAppBar(ScreenEdge.Left, _appBarMargin);
+                _appBarHandler.MoveAppBar(ScreenEdge.Left);
             }
         }
 
@@ -72,7 +72,7 @@ namespace TestStuffWPF
             }
             else
             {
-                _appBarHandler.MoveAppBar(ScreenEdge.Right, _appBarMargin);
+                _appBarHandler.MoveAppBar(ScreenEdge.Right);
             }
         }
 
@@ -84,7 +84,7 @@ namespace TestStuffWPF
             }
             else
             {
-                _appBarHandler.MoveAppBar(ScreenEdge.Bottom, _appBarMargin);
+                _appBarHandler.MoveAppBar(ScreenEdge.Bottom);
             }
         }
 
