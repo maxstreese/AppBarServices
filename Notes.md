@@ -13,6 +13,9 @@
   * VisibleMargin
   * HiddenMargin
 
+### When to hide and unhide
+* Use the MouseEnter and MouseLeave events of the handled window. No WinApi functions required.
+
 ## Questions come and go
 * One question is how I have to implement all of the steps with regards to the AutoHide functionality, the other is how I can test whether it worked. "-->" There is two sides to the implementation: One, building all the functionality to talk to the operating system and two, communicating with the handled window (e.g. getting notified when the mouse is over the hidden AppBar)
 * What kind of options/behavoir should there be regarding the AutoHide-toggle? Options:

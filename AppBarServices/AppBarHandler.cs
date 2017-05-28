@@ -5,6 +5,7 @@ using System.Diagnostics;
 
 using System;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
 
@@ -337,15 +338,20 @@ namespace AppBarServices
             if (!_currentAppBarAttributes.isRegisteredAutoHide)
             {
                 _currentAppBarAttributes.isRegisteredAutoHide = true;
+
+                _windowToHandle.MouseEnter += HandledWindowMouseEnter;
+                _windowToHandle.MouseLeave += HandledWindowMouseLeave;
             }
             else
             {
                 _currentAppBarAttributes.isRegisteredAutoHide = false;
+
+                _windowToHandle.MouseEnter -= HandledWindowMouseEnter;
+                _windowToHandle.MouseLeave -= HandledWindowMouseLeave;
             }
             
             return true;
         }
-
 
         // Processes window messages send by the operating system. This is a callback function that requires a hook on the
         // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
@@ -581,6 +587,32 @@ namespace AppBarServices
         }
         #endregion
 
+
+        #region Methods to handle events send by the handled window
+        // ... 
+        private void HandledWindowMouseEnter(object sender, MouseEventArgs e)
+        {
+            if (_currentAppBarAttributes.isRegisteredAutoHide)
+            {
+                if (!HandleAppBarQueryPosSetPos(doHide: false))
+                {
+                    RemoveAppBar();
+                }
+            }
+        }
+
+        // ...
+        private void HandledWindowMouseLeave(object sender, MouseEventArgs e)
+        {
+            if (_currentAppBarAttributes.isRegisteredAutoHide)
+            {
+                if (!HandleAppBarQueryPosSetPos(doHide: true))
+                {
+                    RemoveAppBar();
+                }
+            }
+        }
+        #endregion
 
         #region External Functions (unmanaged code)
         // Sends an AppBar message to the operating system (i.e. does all the actual AppBar stuff, like registering and removing it).

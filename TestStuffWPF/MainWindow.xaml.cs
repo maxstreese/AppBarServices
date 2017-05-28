@@ -26,7 +26,8 @@ namespace TestStuffWPF
     public partial class MainWindow : Window
     {
         AppBarHandler _appBarHandler;
-        double _appBarMargin = 0.1;
+        double _appBarMarginVisible = 0.1;
+        double _appBarMarginHidden = 0.05;
 
         public MainWindow()
         {
@@ -39,11 +40,11 @@ namespace TestStuffWPF
         {
             if (_appBarHandler.AppBarIsRegistered == false)
             {
-                _appBarHandler.PlaceAppBar(false, ScreenEdge.Top, _appBarMargin);
+                _appBarHandler.PlaceAppBar(true, ScreenEdge.Top, _appBarMarginVisible, _appBarMarginHidden);
             }
             else
             {
-                _appBarHandler.MoveAppBar(ScreenEdge.Top);
+                // _appBarHandler.MoveAppBar(ScreenEdge.Top);
             }
         }
 
@@ -51,7 +52,7 @@ namespace TestStuffWPF
         {
             if (_appBarHandler.AppBarIsRegistered == false)
             {
-                _appBarHandler.PlaceAppBar(false, ScreenEdge.Left, _appBarMargin);
+                _appBarHandler.PlaceAppBar(false, ScreenEdge.Left, _appBarMarginVisible);
             }
             else
             {
@@ -68,7 +69,7 @@ namespace TestStuffWPF
         {
             if (_appBarHandler.AppBarIsRegistered == false)
             {
-                _appBarHandler.PlaceAppBar(false, ScreenEdge.Right, _appBarMargin);
+                _appBarHandler.PlaceAppBar(false, ScreenEdge.Right, _appBarMarginVisible);
             }
             else
             {
@@ -80,7 +81,7 @@ namespace TestStuffWPF
         {
             if (_appBarHandler.AppBarIsRegistered == false)
             {
-                _appBarHandler.PlaceAppBar(false, ScreenEdge.Bottom, _appBarMargin);
+                _appBarHandler.PlaceAppBar(false, ScreenEdge.Bottom, _appBarMarginVisible);
             }
             else
             {
@@ -101,26 +102,6 @@ namespace TestStuffWPF
         private void btnStuffB_Click(object sender, RoutedEventArgs e)
         {
             
-        }
-
-        private void Window_Activated(object sender, EventArgs e)
-        {
-            System.Diagnostics.Debug.Print("Activated");
-        }
-
-        private void Window_Deactivated(object sender, EventArgs e)
-        {
-            System.Diagnostics.Debug.Print("Deactivated");
-        }
-
-        private void Window_MouseEnter(object sender, MouseEventArgs e)
-        {
-            System.Diagnostics.Debug.Print("Entered");
-        }
-
-        private void Window_MouseLeave(object sender, MouseEventArgs e)
-        {
-            System.Diagnostics.Debug.Print("Left");
         }
     }
 }
