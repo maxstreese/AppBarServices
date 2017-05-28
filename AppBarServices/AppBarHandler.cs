@@ -83,6 +83,12 @@ namespace AppBarServices
         {
             if (!_currentAppBarAttributes.isRegistered)
             {
+                // Setting up the HwndSource object (Win32 representation of a WPF window) based on the _windowToHandle field.
+                // Important note: This cam only be done once the _windowToHandle was initialized (after its constructor ran).
+                // Therefore I did not put it in the constructor of the AppBarHandler, which means that at least the 
+                // initialization of the AppBarHandler can take place in the constructor of the handled window.
+                WindowInteropHelper windowHelper = new WindowInteropHelper(_windowToHandle);
+                _windowSource = HwndSource.FromHwnd(windowHelper.Handle);
 
                 if (HandleAppBarNew())
                 {
