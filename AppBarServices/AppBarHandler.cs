@@ -41,7 +41,40 @@ namespace AppBarServices
         public bool AppBarIsRegisteredAutoHide
         {
             get { return _currentAppBarAttributes.isRegisteredAutoHide; }
-            set { throw new NotImplementedException(); }
+            set
+            {
+                if (_currentAppBarAttributes.isRegistered)
+                {
+                    if (!_currentAppBarAttributes.isRegisteredAutoHide)
+                    {
+                        if (HandleSetAutoHideBarEx(doRegister: true))
+                        {
+                            if (!HandleAppBarQueryPosSetPos(doHide: true))
+                            {
+                                RemoveAppBar();
+                            }
+                        }
+                        else
+                        {
+                            RemoveAppBar();
+                        }
+                    }
+                    else
+                    {
+                        if (HandleSetAutoHideBarEx(doRegister: false))
+                        {
+                            if (!HandleAppBarQueryPosSetPos(doHide: false))
+                            {
+                                RemoveAppBar();
+                            }
+                        }
+                        else
+                        {
+                            RemoveAppBar();
+                        }
+                    }
+                }
+            }
         }
 
         // Gets or sets the margin of the AppBar that is used when it is not hidden.
@@ -148,14 +181,27 @@ namespace AppBarServices
             return true;
         }
 
-        // Moves _windowToHandle if it is already an AppBar
+        // Moves _windowToHandle to the defined screenEdge if it already is an AppBar.
         public bool MoveAppBar(ScreenEdge screenEdge)
         {
             if (_currentAppBarAttributes.isRegistered)
             {
+                if (_currentAppBarAttributes.isRegisteredAutoHide)
+                {
+                    HandleSetAutoHideBarEx(doRegister: false);
+
+                    _currentAppBarAttributes.screenEdge = screenEdge;
+
+                    if (!HandleSetAutoHideBarEx(doRegister: true))
+                    {
+                        RemoveAppBar();
+                        return false;
+                    }
+                }
+
                 _currentAppBarAttributes.screenEdge = screenEdge;
 
-                if (!HandleAppBarQueryPosSetPos(doHide: _currentAppBarAttributes.isHidden))
+                if (!HandleAppBarQueryPosSetPos(doHide: _currentAppBarAttributes.isRegisteredAutoHide))
                 {
                     RemoveAppBar();
                     return false;
@@ -594,10 +640,7 @@ namespace AppBarServices
         {
             if (_currentAppBarAttributes.isRegisteredAutoHide)
             {
-                if (!HandleAppBarQueryPosSetPos(doHide: false))
-                {
-                    RemoveAppBar();
-                }
+                HideUnhide(doHide: false);
             }
         }
 
@@ -606,10 +649,64 @@ namespace AppBarServices
         {
             if (_currentAppBarAttributes.isRegisteredAutoHide)
             {
-                if (!HandleAppBarQueryPosSetPos(doHide: true))
-                {
-                    RemoveAppBar();
-                }
+                HideUnhide(doHide: true) ;
+            }
+        }
+
+        private void HideUnhide(bool doHide = true)
+        {
+
+            // Get the rectangle information of the monitor the handled window is currently on.
+            WinApiRectangle windowRectangle = new WinApiRectangle();
+            windowRectangle.left = (int)_windowToHandle.Left;
+            windowRectangle.top = (int)_windowToHandle.Top;
+            windowRectangle.right = (int)(_windowToHandle.Left + _windowToHandle.Width);
+            windowRectangle.bottom = (int)(_windowToHandle.Top + _windowToHandle.Height);
+            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
+
+            // Used in conjunction with _currentAppBarAttributes.margin to work out either the height or the width of the AppBar in pixels.
+            int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
+            int currentMonitorWidth = currentMonitor.rcMonitor.right - currentMonitor.rcMonitor.left;
+
+            // Determine the margin according to the doHide parameter.
+            double margin;
+            if (doHide)
+            {
+                margin = _currentAppBarAttributes.hiddenMargin;
+            }
+            else
+            {
+                margin = _currentAppBarAttributes.visibleMargin;
+            }
+
+            // Set the margin according to the screen edge the AppBar is bound to.
+            switch (_currentAppBarAttributes.screenEdge)
+            {
+                case ScreenEdge.Left:
+                    _windowToHandle.Width = currentMonitorWidth * margin;
+                    break;
+                case ScreenEdge.Top:
+                    _windowToHandle.Height = currentMonitorHeight * margin;
+                    break;
+                case ScreenEdge.Right:
+                    _windowToHandle.Width = currentMonitorWidth * margin;
+                    _windowToHandle.Left = currentMonitor.rcMonitor.right - currentMonitorWidth * margin;
+                    break;
+                case ScreenEdge.Bottom:
+                    _windowToHandle.Height = currentMonitorHeight * margin;
+                    _windowToHandle.Top = currentMonitor.rcMonitor.bottom - currentMonitorHeight * margin;
+                    break;
+            }
+
+            // Finally invert _currentAppBarAttributes.isHidden to reflect the new status of the AppBar. This could have already
+            // been done in the previous if-statement. I prever it to be here though because it belongs here logically.
+            if (doHide)
+            {
+                _currentAppBarAttributes.isHidden = true;
+            }
+            else
+            {
+                _currentAppBarAttributes.isHidden = false;
             }
         }
         #endregion

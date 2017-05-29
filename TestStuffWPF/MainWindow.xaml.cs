@@ -96,7 +96,14 @@ namespace TestStuffWPF
 
         private void btnStuffA_Click(object sender, RoutedEventArgs e)
         {
-            
+            if (_appBarHandler.AppBarIsRegisteredAutoHide)
+            {
+                _appBarHandler.AppBarIsRegisteredAutoHide = false;
+            }
+            else
+            {
+                _appBarHandler.AppBarIsRegisteredAutoHide = true;
+            }
         }
 
         private void btnStuffB_Click(object sender, RoutedEventArgs e)
