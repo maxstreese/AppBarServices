@@ -131,11 +131,11 @@ namespace AppBarServices
                     SaveRestoreOriginalWindowAttributes(doSave: true);
                     
                     _currentAppBarAttributes.screenEdge = screenEdge;
+                    _currentAppBarAttributes.visibleMargin = visibleMargin;
+                    _currentAppBarAttributes.hiddenMargin = hiddenMargin;
 
                     if (!isAutoHide)
                     {
-                        _currentAppBarAttributes.visibleMargin = visibleMargin;
-
                         if (!HandleAppBarQueryPosSetPos(doHide: false))
                         {
                             RemoveAppBar();
@@ -146,8 +146,6 @@ namespace AppBarServices
                     {
                         if (HandleSetAutoHideBarEx(doRegister: true))
                         {
-                            _currentAppBarAttributes.hiddenMargin = hiddenMargin;
-
                             if (!HandleAppBarQueryPosSetPos(doHide: true))
                             {
                                 RemoveAppBar();

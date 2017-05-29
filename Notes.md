@@ -15,6 +15,9 @@
 
 ### When to hide and unhide
 * Use the MouseEnter and MouseLeave events of the handled window. No WinApi functions required.
+* When the AutoHide AppBar unhides, it should not register a new AppBar position. Instead the unhidden AppBar should overlap other Applications. What does this entail?
+  * Code changes
+  * A new attribute (opacity)
 
 ## Questions come and go
 * One question is how I have to implement all of the steps with regards to the AutoHide functionality, the other is how I can test whether it worked. "-->" There is two sides to the implementation: One, building all the functionality to talk to the operating system and two, communicating with the handled window (e.g. getting notified when the mouse is over the hidden AppBar)
@@ -24,3 +27,4 @@
 
 ## Stuff to do
 * All _currentAppBarAttributes should be reset when they are no longer correct. This includes setting the margins to 0 and adding a "None" to the ScreenEdge enum. I should also ask Ralf about this.
+* Setting the AppBar to the bottom of the screen (i.e. where the taskbar is) leads to a short visual glitch, when the AppBar is set to AutoHide. I believe this comes from the GetPosSetPos handler method.
