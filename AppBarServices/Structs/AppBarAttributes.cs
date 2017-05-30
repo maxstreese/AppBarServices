@@ -27,5 +27,9 @@ namespace AppBarServices.Structs
         // value can be set to as close to 0 as one would like, the minimal HiddenMargin that will be set by
         // the handler is 2 pixels.
         internal double hiddenMargin;
+        // The rectangle of the AppBar window.
+        internal WinApiRectanglePoints windowRectangle;
+        // The screen rectangle of the screen the AppBar is on.
+        internal WinApiRectanglePoints screenRectangle;
     }
 }

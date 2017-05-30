@@ -52,8 +52,10 @@
     <Compile Include="Structs\AppBarData.cs" />
     <Compile Include="Structs\AppBarAttributes.cs" />
     <Compile Include="Structs\MonitorInfoData.cs" />
+    <Compile Include="Structs\WinApiPoint.cs" />
+    <Compile Include="Structs\WinApiRectangleDimensions.cs" />
+    <Compile Include="Structs\WinApiRectanglePoints.cs" />
     <Compile Include="Structs\WPFWindowAttributes.cs" />
-    <Compile Include="Structs\WinApiRectangle.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

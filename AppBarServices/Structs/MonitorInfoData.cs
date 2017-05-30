@@ -6,8 +6,8 @@ namespace AppBarServices.Structs
     internal struct MonitorInfoData
     {
         internal int cbSize;
-        internal WinApiRectangle rcMonitor;
-        internal WinApiRectangle rcWork;
+        internal WinApiRectanglePoints rcMonitor;
+        internal WinApiRectanglePoints rcWork;
         internal int dwFlags;
     }
 }

@@ -108,7 +108,7 @@ namespace TestStuffWPF
 
         private void btnStuffB_Click(object sender, RoutedEventArgs e)
         {
-            
+            _appBarHandler.SetWindowPos();
         }
     }
 }

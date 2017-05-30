@@ -28,3 +28,29 @@
 ## Stuff to do
 * All _currentAppBarAttributes should be reset when they are no longer correct. This includes setting the margins to 0 and adding a "None" to the ScreenEdge enum. I should also ask Ralf about this.
 * Setting the AppBar to the bottom of the screen (i.e. where the taskbar is) leads to a short visual glitch, when the AppBar is set to AutoHide. I believe this comes from the GetPosSetPos handler method.
+
+## Session - 2017-05-30
+* Use the [MonitorFromWindow function](https://msdn.microsoft.com/en-us/library/dd145064(v=vs.85).aspx) rather than MonitorFromRect.
+* Handle methods and what the should do
+  * HandleAppBarNew
+    * Registers the window as an AppBar
+    * Sets isRegistered to true
+  * HandleAppBarRemove
+    * Unregisters the window as an AppBar
+    * Sets isRegistered to false
+  * HandleAppBarQueryPosSetPos
+    * Queries and then reserves the position for the AppBar
+    * Also positions the AppBar via HandleMoveWindow
+    * Sets isHidden to true or false
+    * Sets the currentMonitor attributes
+    * Sets the currentPosition attributes
+  * HandleGetMonitorInfoFromWindow
+    * 
+  * HandleMoveWindow
+  * ProcessWinApiMessages
+
+* PlaceAppBar(isAutoHide, screenEdge, visibleMargin, hiddenMargin)
+  * if(!_isRegistered)
+    * _windowSource = ...
+    * screenEdge = ...
+    * visibleMargin = ...

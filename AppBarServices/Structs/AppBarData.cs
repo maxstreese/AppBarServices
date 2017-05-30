@@ -22,7 +22,7 @@ namespace AppBarServices.Structs
         //  - ABM_GETTASKBARPOS, ABM_QUERYPOS, ABM_SETPOS: The bounding rectangle, in screen coordinates, of an appbar or the Windows taskbar.
         //  - ABM_GETAUTOHIDEBAREX, ABM_SETAUTOHIDEBAREX: The monitor on which the operation is being performed. 
         //    This information can be retrieved through the GetMonitorInfo function.
-        internal WinApiRectangle rc;
+        internal WinApiRectanglePoints rc;
         // A message-dependent value. This member is used with these messages: ABM_SETAUTOHIDEBAR, ABM_SETAUTOHIDEBAREX, ABM_SETSTATE
         internal int lParam;
     }

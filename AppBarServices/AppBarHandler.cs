@@ -233,7 +233,7 @@ namespace AppBarServices
         #region Methods to encapsulate the interaction with the operating system
         // Gets information in the form of a MonitorInfoData struct of the monitor that has the largest area of intersection with
         // the provided windowRectangle parameter. This method encapsulates the WinApi functions GetMonitorInfo and MonitorFromRect.
-        internal MonitorInfoData HandleGetMonitorInfoFromRect(WinApiRectangle windowRectangle)
+        internal MonitorInfoData HandleGetMonitorInfoFromRect(WinApiRectanglePoints windowRectangle)
         {
             MonitorInfoData monitorInfoData = new MonitorInfoData();
             monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
@@ -244,8 +244,30 @@ namespace AppBarServices
 
             return monitorInfoData;
         }
+        
+        /// <summary>
+        /// Gets the MonitorInfoData for the screen the _windowToHandle is currently on by first supplying the _windowSource.Handle to
+        /// the MonitorFromWindow function to get the screen handle and then supplying that screen handle to the GetMonitorInfo function
+        /// to get the MonitorInfoData. If the _windowToHandle does not overlap with any screen, the primary screen information is returned.
+        /// </summary>
+        /// <returns>Returns a MonitorInfoData struct.</returns>
+        internal MonitorInfoData HandleGetMonitorInfoFromWindowHandle()
+        {
+            MonitorInfoData monitorInfoData = new MonitorInfoData();
+            monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
 
-        // Registers the AppBar with the operating system (i.e. calls SHAppBarData with the MessageIdentifier ABM_NEW).
+            IntPtr monitorHandle;
+            monitorHandle = MonitorFromWindow(_windowSource.Handle, (int)MonitorFromRectOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
+            GetMonitorInfo(monitorHandle, ref monitorInfoData);
+
+            return monitorInfoData;
+        }
+        
+        /// <summary>
+        /// Registers the AppBar with the operating system by sending the ABM_NEW message via SHAppBarData.
+        /// Before finishing it also sets _currentAppBarAttributs.isRegistered to true.
+        /// </summary>
+        /// <returns>Returns true if the registration was successful, false otherwise.</returns>
         private bool HandleAppBarNew()
         {
             // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
@@ -268,6 +290,33 @@ namespace AppBarServices
             return true;
         }
 
+        private AppBarData HandleAppBarQueryPos(bool doHide, ScreenEdge screenEdge)
+        {
+            // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
+            AppBarData appBarData = new AppBarData();
+            appBarData.cbSize = Marshal.SizeOf(appBarData);
+            appBarData.hWnd = _windowSource.Handle;
+            appBarData.uEdge = (int)screenEdge;
+
+            // Get the rectangle information of the monitor the handled window is currently on
+            // (either as an already set AppBar or as a normal window).
+            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromWindowHandle();
+
+            // The rectangle that the caller wants the AppBar to have.
+            WinApiRectanglePoints desiredRectangle = new WinApiRectanglePoints();
+
+            // Specify the dimensions of the AppBar based on the '_currentAppBarAttributes.screenEdge' and '_currentAppBarAttributes.margin' values.
+            SetInitialRectangle(ref appBarData, ref desiredRectangle, currentMonitor, doHide);
+
+            // Query the position where the AppBar should go and let the operating system adjust it for any obstacles.
+            // Then take the adjusted values and correct them to represent the desired width or height value
+            // (depending on the defined screen edge).
+            SHAppBarMessage((int)MessageIdentifier.ABM_QUERYPOS, ref appBarData);
+            AdjustQueriedAppBarDataRectangle(ref appBarData, desiredRectangle, currentMonitor);
+
+            return appBarData;
+        }
+
         // Works out the position of the AppBar, reserves the space (i.e. calls SHAppBarData with the MessageIdentifiers ABM_QUERYPOS and ABM_SETPOS)
         // and moves the WPF window to the reserved space if that space has the margin expected (i.e. defined) by the caller. If successful returns
         // true, otherwise false.
@@ -281,17 +330,12 @@ namespace AppBarServices
 
             // Get the rectangle information of the monitor the handled window is currently on
             // (either as an already set AppBar or as a normal window).
-            WinApiRectangle windowRectangle = new WinApiRectangle();
-            windowRectangle.left = (int)_windowToHandle.Left;
-            windowRectangle.top = (int)_windowToHandle.Top;
-            windowRectangle.right = (int)(_windowToHandle.Left + _windowToHandle.Width);
-            windowRectangle.bottom = (int)(_windowToHandle.Top + _windowToHandle.Height);
-            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
+            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromWindowHandle();
 
             // The rectangle that the caller wants the AppBar to have. This variable is used to check whether the AppBar rectangle set by the
             // operating system is the same width- or height-wise (depending on the defined screen edge) as the rectangle desired by the caller.
             // Only if that is the case will the AppBar be set in the end.
-            WinApiRectangle desiredRectangle = new WinApiRectangle();
+            WinApiRectanglePoints desiredRectangle = new WinApiRectanglePoints();
 
             // Specify the dimensions of the AppBar based on the '_currentAppBarAttributes.screenEdge' and '_currentAppBarAttributes.margin' values.
             SetInitialRectangle(ref appBarData, ref desiredRectangle, currentMonitor, doHide);
@@ -326,7 +370,10 @@ namespace AppBarServices
             return true;
         }
 
-        // Removes the AppBar from the operating system.
+        /// <summary>
+        /// Unregisters the AppBar from the operating system by sending the ABM_REMOVE message via SHAppBarMessage.
+        /// Before finishing it also sets _currentAppBarAttributs.isRegistered to false.
+        /// </summary>
         private void HandleAppBarRemove()
         {
             // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
@@ -344,6 +391,34 @@ namespace AppBarServices
             _currentAppBarAttributes.isRegistered = false;
         }
 
+        /// <summary>
+        /// Tests whether the _windowToHandle is the registered AutoHide AppBar at the position specified by the _currentAppBarAttributes.
+        /// </summary>
+        /// <returns>Returns true if the _windowToHandle is the registered AutoHide AppBar, false otherwise.</returns>
+        private bool HandleGetAutoHideBarEx()
+        {
+            // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
+            AppBarData appBarData = new AppBarData();
+            appBarData.cbSize = Marshal.SizeOf(appBarData);
+            appBarData.uEdge = (int)_currentAppBarAttributes.screenEdge;
+            appBarData.rc.left = _currentAppBarAttributes.screenRectangle.left;
+            appBarData.rc.top = _currentAppBarAttributes.screenRectangle.top;
+            appBarData.rc.right = _currentAppBarAttributes.screenRectangle.right;
+            appBarData.rc.bottom = _currentAppBarAttributes.screenRectangle.bottom;
+
+            IntPtr autoHideAppBarHandle;
+            autoHideAppBarHandle = (IntPtr)SHAppBarMessage((int)MessageIdentifier.ABM_GETAUTOHIDEBAREX, ref appBarData);
+            
+            if (autoHideAppBarHandle == _windowSource.Handle)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         // Registers or unregisters an AppBar as AutoHide (i.e. calls SHAppBarData with the MessageIdentifier ABM_SETAUTOHIDEBAREX).
         private bool HandleSetAutoHideBarEx(bool doRegister)
         {
@@ -356,12 +431,7 @@ namespace AppBarServices
 
             // Get the rectangle information of the monitor the handled window is currently on
             // (either as an already set AppBar or as a normal window).
-            WinApiRectangle windowRectangle = new WinApiRectangle();
-            windowRectangle.left = (int)_windowToHandle.Left;
-            windowRectangle.top = (int)_windowToHandle.Top;
-            windowRectangle.right = (int)(_windowToHandle.Left + _windowToHandle.Width);
-            windowRectangle.bottom = (int)(_windowToHandle.Top + _windowToHandle.Height);
-            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
+            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromWindowHandle();
 
             // Specifying the AppBarData to be supplied to the SHAppBarMessage function part 2.
             appBarData.rc.left = currentMonitor.rcMonitor.left;
@@ -431,13 +501,7 @@ namespace AppBarServices
                 _originalWindowAttributes.resizeMode = _windowToHandle.ResizeMode;
                 _originalWindowAttributes.windowState = _windowToHandle.WindowState;
                 
-                WinApiRectangle windowRectangle = new WinApiRectangle();
-                windowRectangle.left = (int)_originalWindowAttributes.windowLeft;
-                windowRectangle.top = (int)_originalWindowAttributes.windowTop;
-                windowRectangle.right = (int)(_originalWindowAttributes.windowLeft + _originalWindowAttributes.windowWidth);
-                windowRectangle.bottom = (int)(_originalWindowAttributes.windowTop + _originalWindowAttributes.windowHeight);
-                MonitorInfoData originalMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
-
+                MonitorInfoData originalMonitor = HandleGetMonitorInfoFromWindowHandle();
                 _originalWindowAttributes.monitorTop = originalMonitor.rcMonitor.top;
                 _originalWindowAttributes.monitorHeight = originalMonitor.rcMonitor.bottom - originalMonitor.rcMonitor.top;
                 _originalWindowAttributes.monitorLeft = originalMonitor.rcMonitor.left;
@@ -448,7 +512,7 @@ namespace AppBarServices
                 // Get the MonitorInfoData for the monitor where the handled window will be placed after it unregisters
                 // as an AppBar. In case the monitor the window came from before it registered does still exist, that
                 // monitor will be returned. Otherwise the currentMonitor will default to the primary monitor.
-                WinApiRectangle windowRectangle = new WinApiRectangle();
+                WinApiRectanglePoints windowRectangle = new WinApiRectanglePoints();
                 windowRectangle.left = (int)_originalWindowAttributes.windowLeft;
                 windowRectangle.top = (int)_originalWindowAttributes.windowTop;
                 windowRectangle.right = (int)(_originalWindowAttributes.windowLeft + _originalWindowAttributes.windowWidth);
@@ -476,9 +540,9 @@ namespace AppBarServices
             }
         }
 
-        // Sets the initial values for desiredRectangle and appBarData.rc dpending on _currentAppBarAttributes.screenEdge and
+        // Sets the initial values for desiredRectangle and appBarData.rc depending on _currentAppBarAttributes.screenEdge and
         // _currentAppBarAttributes.margin.
-        private void SetInitialRectangle(ref AppBarData appBarData, ref WinApiRectangle desiredRectangle, MonitorInfoData currentMonitor, bool doHide)
+        private void SetInitialRectangle(ref AppBarData appBarData, ref WinApiRectanglePoints desiredRectangle, MonitorInfoData currentMonitor, bool doHide)
         {
             // Used in conjunction with _currentAppBarAttributes.margin to work out either the height or the width of the AppBar in pixels.
             int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
@@ -546,7 +610,7 @@ namespace AppBarServices
         // by setting the bottom of the desired rectangle to the taskbar top. And leave the desired top position of the AppBar rectangle unchanged
         // (if it doesnt overlap the taskbar as well, in that case it will be set to the taskbar top as well). This method tries to adjust this
         // change so that the width or height (depending on the defined screen edge) value of the AppBar is unchanged by the system correction. 
-        private void AdjustQueriedAppBarDataRectangle(ref AppBarData appBarData, WinApiRectangle desiredRectangle, MonitorInfoData currentMonitor)
+        private void AdjustQueriedAppBarDataRectangle(ref AppBarData appBarData, WinApiRectanglePoints desiredRectangle, MonitorInfoData currentMonitor)
         {
             ScreenEdge screenEdge = (ScreenEdge)appBarData.uEdge;
 
@@ -575,7 +639,7 @@ namespace AppBarServices
         // violate the boundaries of the current monitor. This method is here to guarantee that only those AppBars 
         // are placed, that do not have unwanted width or height values because the available screen space was not
         // enough.
-        private bool AppBarDataRectangleIsDesired(AppBarData appBarData, WinApiRectangle desiredRectangle, MonitorInfoData currentMonitor)
+        private bool AppBarDataRectangleIsDesired(AppBarData appBarData, WinApiRectanglePoints desiredRectangle, MonitorInfoData currentMonitor)
         {
             ScreenEdge screenEdge = (ScreenEdge)appBarData.uEdge;
 
@@ -655,12 +719,7 @@ namespace AppBarServices
         {
 
             // Get the rectangle information of the monitor the handled window is currently on.
-            WinApiRectangle windowRectangle = new WinApiRectangle();
-            windowRectangle.left = (int)_windowToHandle.Left;
-            windowRectangle.top = (int)_windowToHandle.Top;
-            windowRectangle.right = (int)(_windowToHandle.Left + _windowToHandle.Width);
-            windowRectangle.bottom = (int)(_windowToHandle.Top + _windowToHandle.Height);
-            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
+            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromWindowHandle();
 
             // Used in conjunction with _currentAppBarAttributes.margin to work out either the height or the width of the AppBar in pixels.
             int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
@@ -726,10 +785,44 @@ namespace AppBarServices
         [DllImport("User32.dll")]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MonitorInfoData lpmi);
 
+        // Retrieves a handle to the display monitor that contains a specified point.
+        // This function is used to get the monitor handle for the 'GetMonitorInfo' function.
+        [DllImport("User32.dll")]
+        private static extern IntPtr MonitorFromPoint(WinApiPoint pt, int dwFlags);
+
         // Retrieves a handle to the display monitor that has the largest area of intersection with a specified rectangle.
         // This function is used to get the monitor handle for the 'GetMonitorInfo' function.
         [DllImport("User32.dll")]
-        private static extern IntPtr MonitorFromRect(ref WinApiRectangle lprc, int dwFlags);
+        private static extern IntPtr MonitorFromRect(ref WinApiRectanglePoints lprc, int dwFlags);
+
+        // Retrieves a handle to the display monitor that has the largest area of intersection with the bounding rectangle
+        // of a specified window. This function is used to get the monitor handle for the 'GetMonitorInfo' function.
+        [DllImport("User32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hWnd, int dwFlags);
+
+        // Moves the window to the position specified by the X, Y, nWidth and nHeight parameters. The parameter hWnd is a handle to
+        // the window which should be moved and the parameter bRepaint indicates whether the window should be repainted after the
+        // function moved the window.
+        [DllImport("User32.dll", CharSet = CharSet.Auto)]
+        private static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+        #endregion
+
+        #region Testing
+        public void SetWindowPos()
+        {
+            MonitorInfoData monitorInfoData = new MonitorInfoData();
+            monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
+
+            WinApiPoint pt = new WinApiPoint();
+            pt.x = 10;
+            pt.y = 10;
+
+            IntPtr monitorHandle;
+            monitorHandle = MonitorFromPoint(pt, (int)MonitorFromRectOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
+            GetMonitorInfo(monitorHandle, ref monitorInfoData);
+
+            System.Diagnostics.Debug.Print("Right: {0}", monitorInfoData.rcMonitor.right);
+        }
         #endregion
     }
 }
