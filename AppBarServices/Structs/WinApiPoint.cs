@@ -1,11 +1,17 @@
-﻿// The struct 'WinApiPoint' represents a point like the WinApi stores it.
-
-namespace AppBarServices.Structs
+﻿namespace AppBarServices.Structs
 {
-    internal struct WinApiPoint
+    /// <summary>
+    /// Represents a point in the way the WinApi uses it. Used for convenience and for communication with the operating system.
+    /// </summary>
+    public struct WinApiPoint
     {
-        // The microsoft docs specify the members as C++ longs. It seems that C++ longs are C# ints.
-        internal int x;
-        internal int y;
+        /// <summary>
+        /// X-coordinate of the point in pixels. 
+        /// </summary>
+        public int x;
+        /// <summary>
+        /// Y-coordinate of the point in pixels.
+        /// </summary>
+        public int y;
     }
 }

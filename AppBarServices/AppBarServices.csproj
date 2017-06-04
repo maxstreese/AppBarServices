@@ -52,6 +52,7 @@
     <Compile Include="Structs\AppBarData.cs" />
     <Compile Include="Structs\AppBarAttributes.cs" />
     <Compile Include="Structs\MonitorInfoData.cs" />
+    <Compile Include="Structs\PreviewAttributes.cs" />
     <Compile Include="Structs\WinApiPoint.cs" />
     <Compile Include="Structs\WinApiRectangleDimensions.cs" />
     <Compile Include="Structs\WinApiRectanglePoints.cs" />

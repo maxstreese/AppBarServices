@@ -14,6 +14,10 @@ using AppBarServices.Structs;
 
 namespace AppBarServices
 {
+    /// <summary>
+    /// Implements all of the logic of the AppBarServices library. It is the only class defined with the public modifier
+    /// and its intended use is for a WPF window to define it as a member and call its public methods in order to implement an AppBar.
+    /// </summary>
     public class AppBarHandler
     {
         #region Fields
@@ -799,12 +803,27 @@ namespace AppBarServices
         // of a specified window. This function is used to get the monitor handle for the 'GetMonitorInfo' function.
         [DllImport("User32.dll")]
         private static extern IntPtr MonitorFromWindow(IntPtr hWnd, int dwFlags);
-
-        // Moves the window to the position specified by the X, Y, nWidth and nHeight parameters. The parameter hWnd is a handle to
-        // the window which should be moved and the parameter bRepaint indicates whether the window should be repainted after the
-        // function moved the window.
+        
+        /// <summary>
+        /// Moves the window to the position specified by the X, Y, nWidth and nHeight parameters.
+        /// </summary>
+        /// <param name="hWnd">Handle to the window which should be moved.</param>
+        /// <param name="X">X-coordinate in pixels.</param>
+        /// <param name="Y">Y.coordinate in pixels.</param>
+        /// <param name="nWidth">Width in pixels.</param>
+        /// <param name="nHeight">Height in pixels.</param>
+        /// <param name="bRepaint">Indicates whether the window should be repainted after the function moved the window.</param>
+        /// <returns></returns>
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
         private static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+        
+        /// <summary>
+        /// Retrieves the position of the mouse cursor, in screen coordinates.
+        /// </summary>
+        /// <param name="pt">A reference to a WinApiPoint strcut that receives the screen coordinates of the cursor.</param>
+        /// <returns>Returns true if successful and false otherwise.</returns>
+        [DllImport("User32.dll")]
+        private static extern bool GetCursorPos(ref WinApiPoint pt);
         #endregion
 
         #region Testing
