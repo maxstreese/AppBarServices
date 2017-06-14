@@ -49,8 +49,9 @@
     <Compile Include="Enums\MessageIdentifier.cs" />
     <Compile Include="Enums\ScreenEdge.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Structs\DesiredAppBarAttributes.cs" />
     <Compile Include="Structs\AppBarData.cs" />
-    <Compile Include="Structs\AppBarAttributes.cs" />
+    <Compile Include="Structs\CurrentAppBarAttributes.cs" />
     <Compile Include="Structs\MonitorInfoData.cs" />
     <Compile Include="Structs\PreviewAttributes.cs" />
     <Compile Include="Structs\WinApiPoint.cs" />

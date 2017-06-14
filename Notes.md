@@ -56,3 +56,10 @@
     * visibleMargin = ...
 
 ## Session 2017-06-03
+* nothing to report here
+
+## Session 2017-06-04
+* -
+
+## Session 2017-06-14
+* 

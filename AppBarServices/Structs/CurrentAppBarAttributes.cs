@@ -5,7 +5,7 @@ using AppBarServices.Enums;
 
 namespace AppBarServices.Structs
 {
-    internal struct AppBarAttributes
+    internal struct CurrentAppBarAttributes
     {
         // Whether the AppBar is registered as an AutoHide AppBar. Can (or at least should) only be set to true
         // when the AppBar is already registered.

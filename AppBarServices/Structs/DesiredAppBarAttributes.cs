@@ -8,6 +8,10 @@ namespace AppBarServices.Structs
     public struct DesiredAppBarAttributes
     {
         /// <summary>
+        /// Whether ór not the AppBar should register.
+        /// </summary>
+        public bool doRegister;
+        /// <summary>
         /// Whether or not the AppBar should AutoHide when placed.
         /// </summary>
         public bool doAutoHide;
