@@ -5,6 +5,7 @@ using System.Diagnostics;
 
 using System;
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
@@ -21,83 +22,157 @@ namespace AppBarServices
     public class AppBarHandler
     {
         #region Fields
-        /// <summary>
-        /// The window which the AppBarHandler is handling.
-        /// </summary>
-        private Window _windowToHandle;
-        /// <summary>
-        /// Represents the window to handle as a WinApi window. Used for WinApi interoperability.
-        /// </summary>
-        private HwndSource _windowSource;
-        /// <summary>
-        /// To receive notifications from the OS, the AppBar window needs to provide a CallbackID.
-        /// </summary>
-        private int _callbackID;
-        /// <summary>
-        /// The attributes of the handled window before it became an AppBar. Used to restore the window back to its original
-        /// form, when the AppBar is removed.
-        /// </summary>
-        private WPFWindowAttributes _originalWindowAttributes;
-        /// <summary>
-        /// The AppBar attributes as they are at any given point in the liefetime of the AppBar. These attributes should only
-        /// be set by methods of the AppBarHandler.
-        /// </summary>
-        private CurrentAppBarAttributes _currentAppBarAttributes;
-        /// <summary>
-        /// The desired AppBar attrbuts as supplied by the library user.
-        /// </summary>
-        private DesiredAppBarAttributes _desiredAppBarAttributes;
-        /// <summary>
-        /// The attributes related to the preview capabilities of the AppBarHandler.
-        /// </summary>
-        private PreviewAttributes _previewAttributes;
+            /// <summary>
+            /// The window which the AppBarHandler is handling.
+            /// </summary>
+            private Window _windowToHandle;
+            /// <summary>
+            /// Represents the window to handle as a WinApi window. Used for WinApi interoperability.
+            /// </summary>
+            private HwndSource _windowSource;
+            /// <summary>
+            /// To receive notifications from the OS, the AppBar window needs to provide a CallbackID.
+            /// </summary>
+            private int _callbackID;
+            /// <summary>
+            /// The attributes of the handled window before it became an AppBar. Used to restore the window back to its original
+            /// form, when the AppBar is removed.
+            /// </summary>
+            private WPFWindowAttributes _originalWindowAttributes;
+            /// <summary>
+            /// The AppBar attributes as they are at any given point in the liefetime of the AppBar. These attributes should only
+            /// be set by methods of the AppBarHandler.
+            /// </summary>
+            private CurrentAppBarAttributes _currentAppBarAttributes;
+            /// <summary>
+            /// The desired AppBar attrbuts as supplied by the library user.
+            /// </summary>
+            private DesiredAppBarAttributes _desiredAppBarAttributes;
+            /// <summary>
+            /// The attributes related to the preview capabilities of the AppBarHandler.
+            /// </summary>
+            private PreviewAttributes _previewAttributes;
         #endregion
 
 
         #region Properties
-        /// <summary>
-        /// Indicates whether the AppBar is currently registered or not.
-        /// </summary>
-        public bool AppBarIsRegistered
-        {
-            get { return _currentAppBarAttributes.isRegistered; }
-        }
-
-        // Gets or sets _currentAppBarAttributes.isRegisteredAutoHide.
-        public bool AppBarIsRegisteredAutoHide
-        {
-            get { return _currentAppBarAttributes.isRegisteredAutoHide; }
-            set
+            /// <summary>
+            /// Gets or sets the DoPreviewToSnap value of the AppBarHandler, that determines whether the Handler should show a preview window to show
+            /// where the AppBar would be placed when the user drags the handled window to a screen edge, and places the AppBar at that position
+            /// if the user stops dragging the window while near the screen edge.
+            /// </summary>
+            public bool DoPreviewToSnap
             {
-                throw new NotImplementedException();
+                get { return _previewAttributes.doPreviewToSnap; }
+                set
+                {
+                    throw new NotImplementedException();
+                }
             }
-        }
+
+            /// <summary>
+            /// Gets or sets the margin (in percent of screen pixels) from the screen edge at which the PreviewToSnap functionality of the
+            /// AppBarHandler should kick in (i.e. show the preview window). Only used when the PreviewToSnap functionality of the Handler is being
+            /// used.
+            /// </summary>
+            public double PreviewToSnapMargin
+            {
+                get { return _previewAttributes.previewToSnapMargin; }
+                set { throw new NotImplementedException(); }
+            }
+
+            /// <summary>
+            /// Gets or sets the value of the opacity of the preview window that is used to preview the AppBar position when the PreviewToSnap
+            /// functionality of the AppBarHandler is being used.
+            /// </summary>
+            public double PreviewOpacity
+            {
+                get { return _previewAttributes.windowOpacity; }
+                set { throw new NotImplementedException(); }
+            }
+
+            /// <summary>
+            /// Gets or sets the value of the window background color of the preview window that is used to preview the AppBar position when
+            /// the PreviewToSnap functionality of the AppBarHandler is being used.
+            /// </summary>
+            public Color PreviewBackgroundColor
+            {
+                get { return _previewAttributes.windowBackgroundColor; }
+                set { throw new NotImplementedException(); } 
+            }
+
+            /// <summary>
+            /// Gets or sets the value of the window border color of the preview window that is used to preview the AppBar position when
+            /// the PreviewToSnap functionality of the AppBarHandler is being used.
+            /// </summary>
+            public Color PreviewBorderColor
+            {
+                get { return _previewAttributes.windowBorderColor; }
+                set { throw new NotImplementedException(); }
+            }
+
+            /// <summary>
+            /// Gets or sets the value of the window border thickness of the preview window that is used to preview the AppBar position when
+            /// the PreviewToSnap functionality of the AppBarHandler is being used.
+            /// </summary>
+            public double PreviewBorderThickness
+            {
+                get { return _previewAttributes.windowBorderThickness; }
+                set { throw new NotImplementedException(); }
+            }
+
+            /// <summary>
+            /// Indicates whether the AppBar is currently registered or not.
+            /// </summary>
+            public bool AppBarIsRegistered
+            {
+                get { return _currentAppBarAttributes.isRegistered; }
+            }
         
-        /// <summary>
-        /// Gets or sets the margin of the AppBar that is used when it is not hidden.
-        /// </summary>
-        public double AppBarVisibleMargin
-        {
-            get { return _currentAppBarAttributes.visibleMargin; }
-            set { throw new NotImplementedException(); }
-        }
+            /// <summary>
+            /// Gets or sets the AutoHide value of the AppBar.
+            /// </summary>
+            public bool AppBarIsAutohide
+            {
+                get { return _currentAppBarAttributes.isRegisteredAutoHide; }
+                set
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            /// <summary>
+            /// Gets or sets the margin of the AppBar that is used when it is not hidden. This value is used both by AppBars that are set to Autohide
+            /// and by the ones that aren't.
+            /// </summary>
+            public double AppBarVisibleMargin
+            {
+                get { return _currentAppBarAttributes.visibleMargin; }
+                set
+                {
+                    throw new NotImplementedException();
+                }
+            }
         
-        /// <summary>
-        /// Gets or sets the margin of the AppBar that is used when it is hidden. This value is only used by AutoHide AppBars.
-        /// </summary>
-        public double AppBarHiddenMargin
-        {
-            get { return _currentAppBarAttributes.hiddenMargin; }
-            set { throw new NotImplementedException(); }
-        }
+            /// <summary>
+            /// Gets or sets the margin of the AppBar that is used when it is hidden. This value is only used by AppBars that are set to AutoHide.
+            /// </summary>
+            public double AppBarHiddenMargin
+            {
+                get { return _currentAppBarAttributes.hiddenMargin; }
+                set
+                {
+                    throw new NotImplementedException();
+                }
+            }
         
-        /// <summary>
-        /// Gets the value of the callbackID for communication with the operating system.
-        /// </summary>
-        public int WindowCallbackID
-        {
-            get { return _callbackID; }
-        }
+            /// <summary>
+            /// Gets the value of the callbackID for communication with the operating system.
+            /// </summary>
+            public int WindowCallbackID
+            {
+                get { return _callbackID; }
+            }
         #endregion
 
 
@@ -131,366 +206,400 @@ namespace AppBarServices
             _desiredAppBarAttributes = desiredAppBarAttributes;
             _previewAttributes = previewAttributes;
         }
-
-        private void HandledWindowClosed(object sender, EventArgs e)
-        {
-            _windowSource.RemoveHook(new HwndSourceHook(ProcessWinApiMessages));
-        }
         #endregion
 
 
         #region Public Methods
-        // Registers the WindowToHandle as an AppBar and places it to the specified position.
-        public bool PlaceAppBar(bool isAutoHide, ScreenEdge screenEdge, double visibleMargin, double hiddenMargin = 0.01)
+        /// <summary>
+        /// Registeres the handled window as an AppBar if it isn't already registered and places it on the specified edge of the screen the handled
+        /// window is currently on.
+        /// </summary>
+        /// <param name="screenEdge">The edge of the screen at which the AppBar should be placed.</param>
+        /// <returns>Returns true if the AppBar could be registered and placed, false otherwise.</returns>
+        public bool PlaceAppBar(ScreenEdge screenEdge)
         {
+            // The monitor the AppBar should be placed on is the monitor the handled window is currently on.
+            _desiredAppBarAttributes.monitorToPlaceOn = GetMonitorInfoFromWindowHandle();
+
+            // The supplied ScreenEdge is the new desired ScreenEdge.
+            _desiredAppBarAttributes.screenEdge = screenEdge;
+
+            // Check if the AppBar is already registered. If so only try to move it. Else first try to register it and then try to move it.
             if (!_currentAppBarAttributes.isRegistered)
             {
-                // Setting up the HwndSource object (Win32 representation of a WPF window) based on the _windowToHandle field.
-                // Important note: This can only be done once the _windowToHandle was initialized (after its constructor ran).
-                // Therefore I did not put it in the constructor of the AppBarHandler, which means that at least the 
-                // initialization of the AppBarHandler can take place in the constructor of the handled window.
-                WindowInteropHelper windowHelper = new WindowInteropHelper(_windowToHandle);
-                _windowSource = HwndSource.FromHwnd(windowHelper.Handle);
+                // Since the handled window is not an AppBar right now but is about to become one, save the current attributes of the
+                // handled window so that those can be restored once it unregisters as an AppBar again.
+                SaveRestoreOriginalWindowAttributes(doSave: true);
 
+                // We want to register the AppBar.
+                _desiredAppBarAttributes.doRegister = true;
+
+                // Check whether the operating system lets us register the handled window as an AppBar. If so proceed, if not
+                // return false.
                 if (SendAppBarNew())
                 {
-                    // Save all of the attributes needed to restore the window to its original position once
-                    // it unregisters as an AppBar.
-                    SaveRestoreOriginalWindowAttributes(doSave: true);
-                    
-                    _currentAppBarAttributes.screenEdge = screenEdge;
-                    _currentAppBarAttributes.visibleMargin = visibleMargin;
-                    _currentAppBarAttributes.hiddenMargin = hiddenMargin;
-
-                    if (!isAutoHide)
+                    // Check whether the AppBar should AutoHide or not and proceed accordingly.
+                    if (_desiredAppBarAttributes.doAutoHide)
                     {
-                        if (!SendAppBarQueryPosSetPos(doHide: false))
+                        // Try to register the AppBar as AutoHide. If that fails, unregister it and return false.
+                        if (!SendSetAutoHideBarEx())
                         {
-                            RemoveAppBar();
+                            _desiredAppBarAttributes.doRegister = false;
+                            SendAppBarRemove();
+
+                            return false;
+                        }
+
+                        // Try to position the AppBar. If that fails first unregister it as AutoHide, then unregister it as AppBar
+                        // and finally return false.
+                        if (!SendAppBarQueryPosSetPos())
+                        {
+                            _desiredAppBarAttributes.doAutoHide = false;
+                            SendSetAutoHideBarEx();
+
+                            _desiredAppBarAttributes.doRegister = false;
+                            SendAppBarRemove();
+
                             return false;
                         }
                     }
+                    // AutoHide is not desired.
                     else
                     {
-                        if (SendSetAutoHideBarEx(doRegister: true))
+                        // Try to position the AppBar. If that fails unregister as AppBar and then return false.
+                        if (!SendAppBarQueryPosSetPos())
                         {
-                            if (!SendAppBarQueryPosSetPos(doHide: true))
-                            {
-                                RemoveAppBar();
-                                return false;
-                            }
-                        }
-                        else
-                        {
-                            RemoveAppBar();
+                            _desiredAppBarAttributes.doRegister = false;
+                            SendAppBarRemove();
+
                             return false;
                         }
                     }
-
-                    // The AppBar should have no borders at all.
-                    _windowToHandle.WindowStyle = WindowStyle.None;
-                    _windowToHandle.ResizeMode = ResizeMode.NoResize;
-
-                    // Trying to move the _windowToHandle while it is in the maximized state doesn't work.
-                    _windowToHandle.WindowState = WindowState.Normal;
-
-                    // Setting the handled window to be topmost ensures that it stays in front even if it is deactivated
-                    // (pressing WIN+G does not minimize the window anymore with this set to true).
-                    _windowToHandle.Topmost = true;
                 }
+                // The AppBar could not be registered, therefore return false.
                 else
                 {
                     return false;
                 }
             }
-
-            return true;
-        }
-
-        // Moves _windowToHandle to the defined screenEdge if it already is an AppBar.
-        public bool MoveAppBar(ScreenEdge screenEdge)
-        {
-            if (_currentAppBarAttributes.isRegistered)
+            // The AppBar is already registered.
+            else
             {
+                // Check whether the AppBar is registered as AutoHide or not and proceed accordingly.
                 if (_currentAppBarAttributes.isRegisteredAutoHide)
                 {
-                    SendSetAutoHideBarEx(doRegister: false);
+                    // Unregister the AppBar as AutoHide in case the screen and/or screen edge will change.
+                    _desiredAppBarAttributes.doAutoHide = false;
+                    SendSetAutoHideBarEx();
 
-                    _currentAppBarAttributes.screenEdge = screenEdge;
-
-                    if (!SendSetAutoHideBarEx(doRegister: true))
+                    // Try to register the AppBar as AutoHide for the new position. If that fails, unregister the AppBar
+                    // and return false.
+                    _desiredAppBarAttributes.doAutoHide = true;
+                    if (!SendSetAutoHideBarEx())
                     {
-                        RemoveAppBar();
+                        _desiredAppBarAttributes.doRegister = false;
+                        SendAppBarRemove();
+
+                        return false;
+                    }
+
+                    // Try to position the AppBar. If that fails first unregister it as AutoHide, then unregister it as AppBar
+                    // and finally return false.
+                    if (!SendAppBarQueryPosSetPos())
+                    {
+                        _desiredAppBarAttributes.doAutoHide = false;
+                        SendSetAutoHideBarEx();
+
+                        _desiredAppBarAttributes.doRegister = false;
+                        SendAppBarRemove();
+
                         return false;
                     }
                 }
-
-                _currentAppBarAttributes.screenEdge = screenEdge;
-
-                if (!SendAppBarQueryPosSetPos(doHide: _currentAppBarAttributes.isRegisteredAutoHide))
+                // The AppBar is not registered as AutoHide, therefore only try to move it.
+                else
                 {
-                    RemoveAppBar();
-                    return false;
+                    // Try to position the AppBar. If that fails unregister as AppBar and then return false.
+                    if (!SendAppBarQueryPosSetPos())
+                    {
+                        _desiredAppBarAttributes.doRegister = false;
+                        SendAppBarNew();
+
+                        return false;
+                    }
                 }
             }
 
+            // All went well, so return true.
             return true;
         }
 
-        // Removes the AppBar and sets the handled window back to the position it hade before it became an AppBar.
+        /// <summary>
+        /// Unregisters the handled window as an AppBar (if it is registered) and resets it to the position it was in before it registered as
+        /// an AppBar.
+        /// </summary>
         public void RemoveAppBar()
         {
+            // Check whether the handled window is currently registered as an AppBar. If so proceed, if not there is nothing to do.
             if (_currentAppBarAttributes.isRegistered)
             {
-                // First check if the AppBar is registered as AutoHide and if so unregister. 
+                // Check whether the AppBar is currently registered as AutoHide. If so unregister as AutoHide.
                 if (_currentAppBarAttributes.isRegisteredAutoHide)
                 {
-                    SendSetAutoHideBarEx(doRegister: false);
+                    _desiredAppBarAttributes.doAutoHide = false;
+                    SendSetAutoHideBarEx();
                 }
 
-                // Then unregister the AppBar.
+                // Unregister as AppBar.
+                _desiredAppBarAttributes.doRegister = false;
                 SendAppBarRemove();
 
-                // Finally restore the original window attributes.
+                // Restore the original window attributes (i.e. set the handled window back to the way it was before it became an AppBar.
                 SaveRestoreOriginalWindowAttributes(doSave: false);
             }
         }
         #endregion
 
 
-        #region Methods to encapsulate the interaction with the operating system
-        /// <summary>
-        /// Gets information in the form of a MonitorInfoData struct of the monitor that contains the point specified by the point parameter.
-        /// If the specified point is not contained in any monitor, the method defaults to the primary monitor.
-        /// </summary>
-        /// <param name="point">The point for which the containing monitors MonitorInfoData should be retrieved.</param>
-        /// <returns>Returns a MonitorInfoData struct.</returns>
-        private MonitorInfoData HandleGetMonitorInfoFromPoint(WinApiPoint point)
-        {
-            MonitorInfoData monitorInfoData = new MonitorInfoData();
-            monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
-
-            IntPtr monitorHandle;
-            monitorHandle = MonitorFromPoint(point, (int)MonitorFromRectOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
-            GetMonitorInfo(monitorHandle, ref monitorInfoData);
-
-            return monitorInfoData;
-        }
-
-        /// <summary>
-        /// Gets information in the form of a MonitorInfoData struct of the monitor that that has the largest area of intersection with
-        /// the provided rectangle parameter. If the specified rectangle has no intersaection with any monitor, the method defaults to 
-        /// the primary monitor.
-        /// </summary>
-        /// <param name="rectangle">The rectangle for which the MonitorInfoData for the monitor with the largest area of intersection
-        /// should be retrieved.</param>
-        /// <returns>Returns a MonitorInfoData struct.</returns>
-        internal MonitorInfoData HandleGetMonitorInfoFromRect(WinApiRectanglePoints rectangle)
-        {
-            MonitorInfoData monitorInfoData = new MonitorInfoData();
-            monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
-
-            IntPtr monitorHandle;
-            monitorHandle = MonitorFromRect(ref rectangle, (int)MonitorFromRectOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
-            GetMonitorInfo(monitorHandle, ref monitorInfoData);
-
-            return monitorInfoData;
-        }
-
-        /// <summary>
-        /// Gets information in the form of a MonitorInfoData struct of the monitor the handled window is currently on.
-        /// If the handled window does not overlap with any monitor, the method defaults to the primary monitor.
-        /// </summary>
-        /// <returns>Returns a MonitorInfoData struct.</returns>
-        internal MonitorInfoData HandleGetMonitorInfoFromWindowHandle()
-        {
-            MonitorInfoData monitorInfoData = new MonitorInfoData();
-            monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
-
-            IntPtr monitorHandle;
-            monitorHandle = MonitorFromWindow(_windowSource.Handle, (int)MonitorFromRectOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
-            GetMonitorInfo(monitorHandle, ref monitorInfoData);
-
-            return monitorInfoData;
-        }
-        
-        /// <summary>
-        /// Registers the AppBar with the operating system by sending the ABM_NEW message via SHAppBarData.
-        /// Before finishing it also sets _currentAppBarAttributs.isRegistered to true.
-        /// </summary>
-        /// <returns>Returns true if the registration was successful, false otherwise.</returns>
-        private bool SendAppBarNew()
-        {
-            // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
-            AppBarData appBarData = new AppBarData();
-            appBarData.cbSize = Marshal.SizeOf(appBarData);
-            appBarData.hWnd = _windowSource.Handle;
-            appBarData.uCallbackMessage = _callbackID;
-
-            // Call the SHAppBarMessage function and let it do its magic. If it fails return false.
-            if (SHAppBarMessage((int)MessageIdentifier.ABM_NEW, ref appBarData) == 0)
+        #region Methods to encapsulate the WinApi - Retrieving MonitorInfoData
+            /// <summary>
+            /// Gets information in the form of a MonitorInfoData struct of the monitor that contains the point specified by the point parameter.
+            /// If the specified point is not contained in any monitor, the method defaults to the primary monitor.
+            /// </summary>
+            /// <param name="point">The point for which the containing monitors MonitorInfoData should be retrieved.</param>
+            /// <returns>Returns a MonitorInfoData struct.</returns>
+            private MonitorInfoData GetMonitorInfoFromPoint(WinApiPoint point)
             {
-                return false;
+                MonitorInfoData monitorInfoData = new MonitorInfoData();
+                monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
+
+                IntPtr monitorHandle;
+                monitorHandle = MonitorFromPoint(point, (int)MonitorInfoOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
+                GetMonitorInfo(monitorHandle, ref monitorInfoData);
+
+                return monitorInfoData;
             }
 
-            // Since the AppBar is now registered, it must receive certain notifications and handle them via WindowProc.
-            // Therefore a hook is added to the HwndSource object of the WPF window.
-            _windowSource.AddHook(new HwndSourceHook(ProcessWinApiMessages));
-
-            _currentAppBarAttributes.isRegistered = true;
-            return true;
-        }
-        
-        /// <summary>
-        /// Works out the position of the AppBar, reserves the space (i.e. calls SHAppBarData with the MessageIdentifiers ABM_QUERYPOS and ABM_SETPOS)
-        /// and moves the WPF window to the reserved space if that space has the margin expected (i.e. defined) by the caller.
-        /// </summary>
-        /// <returns>Returns true if successful, false otherwise</returns>
-        private bool SendAppBarQueryPosSetPos(MonitorInfoData monitorToPlaceOn)
-        {
-            // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
-            AppBarData appBarData = new AppBarData();
-            appBarData.cbSize = Marshal.SizeOf(appBarData);
-            appBarData.hWnd = _windowSource.Handle;
-            appBarData.uEdge = (int)_desiredAppBarAttributes.screenEdge;
-
-            // The rectangle that the caller wants the AppBar to have. This variable is used to check whether the AppBar rectangle set by the
-            // operating system is the same width- or height-wise (depending on the defined screen edge) as the rectangle desired by the caller.
-            // Only if that is the case will the AppBar be set in the end.
-            WinApiRectanglePoints desiredRectangle = new WinApiRectanglePoints();
-
-            // Specify the dimensions of the AppBar based on the '_currentAppBarAttributes.screenEdge' and '_currentAppBarAttributes.margin' values.
-            SetInitialRectangle(ref appBarData, ref desiredRectangle, monitorToPlaceOn, _desiredAppBarAttributes.doAutoHide);
-
-            // Query the position where the AppBar should go and let the operating system adjust it for any obstacles.
-            // Then take the adjusted values and correct them to represent the desired width or height value
-            // (depending on the defined screen edge).
-            SHAppBarMessage((int)MessageIdentifier.ABM_QUERYPOS, ref appBarData);
-            AdjustQueriedAppBarDataRectangle(ref appBarData, desiredRectangle, monitorToPlaceOn);
-
-            // Reserve the position for the AppBar and then check if the position set by the operating system is equal in
-            // width or height (depending on the defined screen edge) to the desired width or height value. If that is not
-            // the case return false.
-            uint testReturn;
-            testReturn = SHAppBarMessage((int)MessageIdentifier.ABM_SETPOS, ref appBarData);
-            if (AppBarDataRectangleIsDesired(appBarData, desiredRectangle, monitorToPlaceOn) == false)
+            /// <summary>
+            /// Gets information in the form of a MonitorInfoData struct of the monitor that that has the largest area of intersection with
+            /// the provided rectangle parameter. If the specified rectangle has no intersaection with any monitor, the method defaults to 
+            /// the primary monitor.
+            /// </summary>
+            /// <param name="rectangle">The rectangle for which the MonitorInfoData for the monitor with the largest area of intersection
+            /// should be retrieved.</param>
+            /// <returns>Returns a MonitorInfoData struct.</returns>
+            internal MonitorInfoData GetMonitorInfoFromRect(WinApiRectanglePoints rectangle)
             {
-                _currentAppBarAttributes.isHidden = false;
-                return false;
+                MonitorInfoData monitorInfoData = new MonitorInfoData();
+                monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
+
+                IntPtr monitorHandle;
+                monitorHandle = MonitorFromRect(ref rectangle, (int)MonitorInfoOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
+                GetMonitorInfo(monitorHandle, ref monitorInfoData);
+
+                return monitorInfoData;
             }
 
-            // Move the WPF window to the reserved position. Do this using the MoveWindow function from the WinApi, because this looks smother
-            // than doing it in WPF.
-            int X = appBarData.rc.left;
-            int Y = appBarData.rc.top;
-            int nWidth = appBarData.rc.right - appBarData.rc.left;
-            int nHeight = appBarData.rc.bottom - appBarData.rc.top;
-            MoveWindow(_windowSource.Handle, X, Y, nWidth, nHeight, true);
-
-            // Update the _curremtAppBarAttributes (windowRectangle)
-            _currentAppBarAttributes.windowRectangle.left = appBarData.rc.left;
-            _currentAppBarAttributes.windowRectangle.top = appBarData.rc.top;
-            _currentAppBarAttributes.windowRectangle.right = appBarData.rc.right;
-            _currentAppBarAttributes.windowRectangle.bottom = appBarData.rc.bottom;
-            // Update the _curremtAppBarAttributes (screenRectangle)
-            _currentAppBarAttributes.screenRectangle.left = monitorToPlaceOn.rcMonitor.left;
-            _currentAppBarAttributes.screenRectangle.top = monitorToPlaceOn.rcMonitor.top;
-            _currentAppBarAttributes.screenRectangle.right = monitorToPlaceOn.rcMonitor.right;
-            _currentAppBarAttributes.screenRectangle.bottom = monitorToPlaceOn.rcMonitor.bottom;
-            // Update the _curremtAppBarAttributes (screenEdge)
-            _currentAppBarAttributes.screenEdge = _desiredAppBarAttributes.screenEdge;
-            // Update the _curremtAppBarAttributes (isHidden)
-            _currentAppBarAttributes.isHidden = _desiredAppBarAttributes.doAutoHide;
-
-            // Everything went well, so return true.
-            return true;
-        }
-
-        /// <summary>
-        /// Unregisters the AppBar from the operating system by sending the ABM_REMOVE message via SHAppBarMessage.
-        /// Before finishing it also sets _currentAppBarAttributs.isRegistered to false.
-        /// </summary>
-        private void SendAppBarRemove()
-        {
-            // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
-            AppBarData appBarData = new AppBarData();
-            appBarData.cbSize = Marshal.SizeOf(appBarData);
-            appBarData.hWnd = _windowSource.Handle;
-
-            // Call the SHAppBarMessage function to remove the AppBar from the operating system.
-            SHAppBarMessage((int)MessageIdentifier.ABM_REMOVE, ref appBarData);
-
-            // Since the AppBar is not registered any longer, no messages from the operating system should receive special treatment anymore.
-            // Therefore the hook is removed from the HwndSource object of the WPF window.
-            _windowSource.RemoveHook(new HwndSourceHook(ProcessWinApiMessages));
-            
-            _currentAppBarAttributes.isRegistered = false;
-        }
-
-        // Registers or unregisters an AppBar as AutoHide (i.e. calls SHAppBarData with the MessageIdentifier ABM_SETAUTOHIDEBAREX).
-        private bool SendSetAutoHideBarEx(MonitorInfoData monitorToSetOn)
-        {
-            // Specifying the AppBarData to be supplied to the SHAppBarMessage function part 1.
-            AppBarData appBarData = new AppBarData();
-            appBarData.cbSize = Marshal.SizeOf(appBarData);
-            appBarData.lParam = Convert.ToInt32(_desiredAppBarAttributes.doAutoHide);
-            appBarData.uEdge = (int)_desiredAppBarAttributes.screenEdge;
-            appBarData.hWnd = _windowSource.Handle;
-
-            // Specifying the AppBarData to be supplied to the SHAppBarMessage function part 2.
-            appBarData.rc.left = monitorToSetOn.rcMonitor.left;
-            appBarData.rc.top = monitorToSetOn.rcMonitor.top;
-            appBarData.rc.right = monitorToSetOn.rcMonitor.right;
-            appBarData.rc.bottom = monitorToSetOn.rcMonitor.bottom;
-
-            // Send the ABM_SETAUTOHIDEBAREX message to the operating system and check if it succeded. If not, return false.
-            int didRegister;
-            didRegister = (int)SHAppBarMessage((int)MessageIdentifier.ABM_SETAUTOHIDEBAREX, ref appBarData);
-            if (didRegister == 0)
+            /// <summary>
+            /// Gets information in the form of a MonitorInfoData struct of the monitor the handled window is currently on.
+            /// If the handled window does not overlap with any monitor, the method defaults to the primary monitor.
+            /// </summary>
+            /// <returns>Returns a MonitorInfoData struct.</returns>
+            internal MonitorInfoData GetMonitorInfoFromWindowHandle()
             {
-                return false;
+                MonitorInfoData monitorInfoData = new MonitorInfoData();
+                monitorInfoData.cbSize = Marshal.SizeOf(monitorInfoData);
+
+                IntPtr monitorHandle;
+                monitorHandle = MonitorFromWindow(_windowSource.Handle, (int)MonitorInfoOnNoIntersection.MONITOR_DEFAULTTOPRIMARY);
+                GetMonitorInfo(monitorHandle, ref monitorInfoData);
+
+                return monitorInfoData;
             }
+        #endregion
 
-            // The WinApi function was successful, so the AppBar either was registered as AutoHide and now isn't anymore,
-            // or was not registered as AutoHide and now is.
-            if (!_currentAppBarAttributes.isRegisteredAutoHide)
+
+        #region Methods to encapsulate the WinApi - SHAppBarMessage
+            /// <summary>
+            /// Registers the AppBar with the operating system by sending the ABM_NEW message via SHAppBarData.
+            /// Before finishing it also sets _currentAppBarAttributs.isRegistered to true.
+            /// </summary>
+            /// <returns>Returns true if the registration was successful, false otherwise.</returns>
+            private bool SendAppBarNew()
             {
-                _currentAppBarAttributes.isRegisteredAutoHide = true;
+                // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
+                AppBarData appBarData = new AppBarData();
+                appBarData.cbSize = Marshal.SizeOf(appBarData);
+                appBarData.hWnd = _windowSource.Handle;
+                appBarData.uCallbackMessage = _callbackID;
 
-                _windowToHandle.MouseEnter += HandledWindowMouseEnter;
-                _windowToHandle.MouseLeave += HandledWindowMouseLeave;
-            }
-            else
-            {
-                _currentAppBarAttributes.isRegisteredAutoHide = false;
-
-                _windowToHandle.MouseEnter -= HandledWindowMouseEnter;
-                _windowToHandle.MouseLeave -= HandledWindowMouseLeave;
-            }
-            
-            return true;
-        }
-
-        // Processes window messages send by the operating system. This is a callback function that requires a hook on the
-        // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
-        // and removed upon removal of the AppBar. This is the implementation of the placeholder function named WindowProc
-        // (use that name to look it up in the microsoft docs).
-        private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
-        {
-            if (uMsg == _callbackID)
-            {
-                if (wParam.ToInt32() == (int)NotificationIdentifier.ABN_POSCHANGED)
+                // Call the SHAppBarMessage function and let it do its magic. If it fails return false.
+                if (SHAppBarMessage((int)MessageIdentifier.ABM_NEW, ref appBarData) == 0)
                 {
-                    SendAppBarQueryPosSetPos(doHide: _currentAppBarAttributes.isHidden);
-                    handled = true;
+                    return false;
                 }
+
+                // Since the AppBar is now registered, it must receive certain notifications and handle them via WindowProc.
+                // Therefore a hook is added to the HwndSource object of the WPF window.
+                _windowSource.AddHook(new HwndSourceHook(ProcessWinApiMessages));
+
+                _currentAppBarAttributes.isRegistered = true;
+                return true;
             }
-            if (uMsg == 534)
+        
+            /// <summary>
+            /// Works out the position of the AppBar, reserves the space (i.e. calls SHAppBarData with the MessageIdentifiers ABM_QUERYPOS and ABM_SETPOS)
+            /// and moves the WPF window to the reserved space if that space has the margin expected (i.e. defined) by the caller.
+            /// </summary>
+            /// <returns>Returns true if successful, false otherwise</returns>
+            private bool SendAppBarQueryPosSetPos()
             {
-                System.Diagnostics.Debug.Print("HalliHallo");
+                // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
+                AppBarData appBarData = new AppBarData();
+                appBarData.cbSize = Marshal.SizeOf(appBarData);
+                appBarData.hWnd = _windowSource.Handle;
+                appBarData.uEdge = (int)_desiredAppBarAttributes.screenEdge;
+
+                // The rectangle that the caller wants the AppBar to have. This variable is used to check whether the AppBar rectangle set by the
+                // operating system is the same width- or height-wise (depending on the defined screen edge) as the rectangle desired by the caller.
+                // Only if that is the case will the AppBar be set in the end.
+                WinApiRectanglePoints desiredRectangle = new WinApiRectanglePoints();
+
+                // Specify the dimensions of the AppBar based on the '_currentAppBarAttributes.screenEdge' and '_currentAppBarAttributes.margin' values.
+                SetInitialRectangle(ref appBarData, ref desiredRectangle, _desiredAppBarAttributes.monitorToPlaceOn, _desiredAppBarAttributes.doAutoHide);
+
+                // Query the position where the AppBar should go and let the operating system adjust it for any obstacles.
+                // Then take the adjusted values and correct them to represent the desired width or height value
+                // (depending on the defined screen edge).
+                SHAppBarMessage((int)MessageIdentifier.ABM_QUERYPOS, ref appBarData);
+                AdjustQueriedAppBarDataRectangle(ref appBarData, desiredRectangle, _desiredAppBarAttributes.monitorToPlaceOn);
+
+                // Reserve the position for the AppBar and then check if the position set by the operating system is equal in
+                // width or height (depending on the defined screen edge) to the desired width or height value. If that is not
+                // the case return false.
+                uint testReturn;
+                testReturn = SHAppBarMessage((int)MessageIdentifier.ABM_SETPOS, ref appBarData);
+                if (AppBarDataRectangleIsDesired(appBarData, desiredRectangle, _desiredAppBarAttributes.monitorToPlaceOn) == false)
+                {
+                    _currentAppBarAttributes.isHidden = false;
+                    return false;
+                }
+
+                // Move the WPF window to the reserved position. Do this using the MoveWindow function from the WinApi, because this looks smoother
+                // than doing it in WPF.
+                int X = appBarData.rc.left;
+                int Y = appBarData.rc.top;
+                int nWidth = appBarData.rc.right - appBarData.rc.left;
+                int nHeight = appBarData.rc.bottom - appBarData.rc.top;
+                MoveWindow(_windowSource.Handle, X, Y, nWidth, nHeight, true);
+
+                // Update the _curremtAppBarAttributes (windowRectangle)
+                _currentAppBarAttributes.windowRectangle.left = appBarData.rc.left;
+                _currentAppBarAttributes.windowRectangle.top = appBarData.rc.top;
+                _currentAppBarAttributes.windowRectangle.right = appBarData.rc.right;
+                _currentAppBarAttributes.windowRectangle.bottom = appBarData.rc.bottom;
+                // Update the _curremtAppBarAttributes (screenRectangle)
+                _currentAppBarAttributes.screenRectangle.left = _desiredAppBarAttributes.monitorToPlaceOn.rcMonitor.left;
+                _currentAppBarAttributes.screenRectangle.top = _desiredAppBarAttributes.monitorToPlaceOn.rcMonitor.top;
+                _currentAppBarAttributes.screenRectangle.right = _desiredAppBarAttributes.monitorToPlaceOn.rcMonitor.right;
+                _currentAppBarAttributes.screenRectangle.bottom = _desiredAppBarAttributes.monitorToPlaceOn.rcMonitor.bottom;
+                // Update the _curremtAppBarAttributes (screenEdge)
+                _currentAppBarAttributes.screenEdge = _desiredAppBarAttributes.screenEdge;
+                // Update the _curremtAppBarAttributes (isHidden)
+                _currentAppBarAttributes.isHidden = _desiredAppBarAttributes.doAutoHide;
+
+                // Everything went well, so return true.
+                return true;
             }
-            return IntPtr.Zero;
-        }
+
+            /// <summary>
+            /// Unregisters the AppBar from the operating system by sending the ABM_REMOVE message via SHAppBarMessage.
+            /// Before finishing it also sets _currentAppBarAttributs.isRegistered to false.
+            /// </summary>
+            private void SendAppBarRemove()
+            {
+                // Specifying the AppBarData to be supplied to the SHAppBarMessage function.
+                AppBarData appBarData = new AppBarData();
+                appBarData.cbSize = Marshal.SizeOf(appBarData);
+                appBarData.hWnd = _windowSource.Handle;
+
+                // Call the SHAppBarMessage function to remove the AppBar from the operating system.
+                SHAppBarMessage((int)MessageIdentifier.ABM_REMOVE, ref appBarData);
+
+                // Since the AppBar is not registered any longer, no messages from the operating system should receive special treatment anymore.
+                // Therefore the hook is removed from the HwndSource object of the WPF window.
+                _windowSource.RemoveHook(new HwndSourceHook(ProcessWinApiMessages));
+            
+                _currentAppBarAttributes.isRegistered = false;
+            }
+
+            // Registers or unregisters an AppBar as AutoHide (i.e. calls SHAppBarData with the MessageIdentifier ABM_SETAUTOHIDEBAREX).
+            private bool SendSetAutoHideBarEx()
+            {
+                // Specifying the AppBarData to be supplied to the SHAppBarMessage function part 1.
+                AppBarData appBarData = new AppBarData();
+                appBarData.cbSize = Marshal.SizeOf(appBarData);
+                appBarData.lParam = Convert.ToInt32(_desiredAppBarAttributes.doAutoHide);
+                appBarData.uEdge = (int)_desiredAppBarAttributes.screenEdge;
+                appBarData.hWnd = _windowSource.Handle;
+
+                // Specifying the AppBarData to be supplied to the SHAppBarMessage function part 2.
+                appBarData.rc.left = _desiredAppBarAttributes.monitorToPlaceOn.rcMonitor.left;
+                appBarData.rc.top = _desiredAppBarAttributes.monitorToPlaceOn.rcMonitor.top;
+                appBarData.rc.right = _desiredAppBarAttributes.monitorToPlaceOn.rcMonitor.right;
+                appBarData.rc.bottom = _desiredAppBarAttributes.monitorToPlaceOn.rcMonitor.bottom;
+
+                // Send the ABM_SETAUTOHIDEBAREX message to the operating system and check if it succeded. If not, return false.
+                int didRegister;
+                didRegister = (int)SHAppBarMessage((int)MessageIdentifier.ABM_SETAUTOHIDEBAREX, ref appBarData);
+                if (didRegister == 0)
+                {
+                    return false;
+                }
+
+                // The WinApi function was successful, so the AppBar either was registered as AutoHide and now isn't anymore,
+                // or was not registered as AutoHide and now is.
+                if (!_currentAppBarAttributes.isRegisteredAutoHide)
+                {
+                    _currentAppBarAttributes.isRegisteredAutoHide = true;
+
+                    _windowToHandle.MouseEnter += HandledWindowMouseEnter;
+                    _windowToHandle.MouseLeave += HandledWindowMouseLeave;
+                }
+                else
+                {
+                    _currentAppBarAttributes.isRegisteredAutoHide = false;
+
+                    _windowToHandle.MouseEnter -= HandledWindowMouseEnter;
+                    _windowToHandle.MouseLeave -= HandledWindowMouseLeave;
+                }
+            
+                return true;
+            }
+        #endregion
+
+
+        #region Methods to encapsulate the WinApi - WindowProc implementation
+            // Processes window messages send by the operating system. This is a callback function that requires a hook on the
+            // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
+            // and removed upon removal of the AppBar. This is the implementation of the placeholder function named WindowProc
+            // (use that name to look it up in the microsoft docs).
+            private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
+            {
+                if (uMsg == _callbackID)
+                {
+                    if (wParam.ToInt32() == (int)NotificationIdentifier.ABN_POSCHANGED)
+                    {
+                        SendAppBarQueryPosSetPos(doHide: _currentAppBarAttributes.isHidden);
+                        handled = true;
+                    }
+                }
+                if (uMsg == 534)
+                {
+                    System.Diagnostics.Debug.Print("HalliHallo");
+                }
+                return IntPtr.Zero;
+            }
         #endregion
 
 
@@ -509,7 +618,7 @@ namespace AppBarServices
                 _originalWindowAttributes.resizeMode = _windowToHandle.ResizeMode;
                 _originalWindowAttributes.windowState = _windowToHandle.WindowState;
                 
-                MonitorInfoData originalMonitor = HandleGetMonitorInfoFromWindowHandle();
+                MonitorInfoData originalMonitor = GetMonitorInfoFromWindowHandle();
                 _originalWindowAttributes.monitorTop = originalMonitor.rcMonitor.top;
                 _originalWindowAttributes.monitorHeight = originalMonitor.rcMonitor.bottom - originalMonitor.rcMonitor.top;
                 _originalWindowAttributes.monitorLeft = originalMonitor.rcMonitor.left;
@@ -525,7 +634,7 @@ namespace AppBarServices
                 windowRectangle.top = (int)_originalWindowAttributes.windowTop;
                 windowRectangle.right = (int)(_originalWindowAttributes.windowLeft + _originalWindowAttributes.windowWidth);
                 windowRectangle.bottom = (int)(_originalWindowAttributes.windowTop + _originalWindowAttributes.windowHeight);
-                MonitorInfoData currentMonitor = HandleGetMonitorInfoFromRect(windowRectangle);
+                MonitorInfoData currentMonitor = GetMonitorInfoFromRect(windowRectangle);
 
                 // Conversion variables needed to put the window on whichever monitor it will be put on at the same position
                 // it was at on the monitor it was on before it registered as an AppBar.
@@ -701,33 +810,12 @@ namespace AppBarServices
 
             return true;
         }
-        #endregion
-
-
-        #region Methods to handle events send by the handled window
-        // ... 
-        private void HandledWindowMouseEnter(object sender, MouseEventArgs e)
-        {
-            if (_currentAppBarAttributes.isRegisteredAutoHide)
-            {
-                HideUnhide(doHide: false);
-            }
-        }
-
-        // ...
-        private void HandledWindowMouseLeave(object sender, MouseEventArgs e)
-        {
-            if (_currentAppBarAttributes.isRegisteredAutoHide)
-            {
-                HideUnhide(doHide: true) ;
-            }
-        }
 
         private void HideUnhide(bool doHide = true)
         {
 
             // Get the rectangle information of the monitor the handled window is currently on.
-            MonitorInfoData currentMonitor = HandleGetMonitorInfoFromWindowHandle();
+            MonitorInfoData currentMonitor = GetMonitorInfoFromWindowHandle();
 
             // Used in conjunction with _currentAppBarAttributes.margin to work out either the height or the width of the AppBar in pixels.
             int currentMonitorHeight = currentMonitor.rcMonitor.bottom - currentMonitor.rcMonitor.top;
@@ -776,38 +864,131 @@ namespace AppBarServices
         }
         #endregion
 
-        #region External Functions (unmanaged code)
-        // Sends an AppBar message to the operating system (i.e. does all the actual AppBar stuff, like registering and removing it).
-        // Useful side note: The microsoft docs state that for some messages (e.g. ABM_REMOVE) this method always returns true (1).
-        // However if the C# implementation is incorrect (e.g. wrong types in AppBarData) the function will return false (0) instead.
+
+        #region Event handlers for events send by the handled window
+        /// <summary>
+        /// Event handler for the MouseEnter event of the handled window.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <remarks>This handler is used enable hiding/unhiding an AppBar that is set to AutoHide.</remarks>
+        private void HandledWindowMouseEnter(object sender, MouseEventArgs e)
+        {
+            if (_currentAppBarAttributes.isRegisteredAutoHide)
+            {
+                HideUnhide(doHide: false);
+            }
+        }
+
+        /// <summary>
+        /// Event handler for the MouseLeave event of the handled window.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <remarks>This handler is used enable hiding/unhiding an AppBar that is set to AutoHide.</remarks>
+        private void HandledWindowMouseLeave(object sender, MouseEventArgs e)
+        {
+            if (_currentAppBarAttributes.isRegisteredAutoHide)
+            {
+                HideUnhide(doHide: true) ;
+            }
+        }
+
+        /// <summary>
+        /// Event handler for the WindowClosed event of the handled window.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        /// <remarks>This handler is used to perform all necessary cleanup actions the AppBarHandler needs to perform
+        /// before the handled window is closed.</remarks>
+        private void HandledWindowClosed(object sender, EventArgs e)
+        {
+            _windowSource.RemoveHook(new HwndSourceHook(ProcessWinApiMessages));
+        }
+        #endregion
+
+
+        #region WinApi function declarations
+        /// <summary>
+        /// Sends an AppBar message to the operating system.
+        /// </summary>
+        /// <param name="dwMessage">The message identifier that specifies which message is being send. The values can be found in the
+        /// enum MessageIdentifier.</param>
+        /// <param name="pData">A reference (pointer) to an AppBarData structure. The content of the structure depends on the message
+        /// being send.</param>
+        /// <returns>Returns a message dependent value (usually 1 (true) if successful and 0 (false) otherwise).</returns>
+        /// <remarks>
+        /// This function registers and unregisters the AppBar with the operating system, queries and reserves screen space for it
+        /// and registers or unregisters the AppBar as AutoHide (and some other things).
+        /// The microsoft docs state that for some messages (e.g. ABM_REMOVE) this method always returns true (1). However if the C#
+        /// implementation is incorrect (e.g. wrong types in AppBarData) the function will return false (0) instead.
+        /// </remarks>
         [DllImport("SHELL32", CallingConvention = CallingConvention.StdCall)]
         private static extern uint SHAppBarMessage(int dwMessage, ref AppBarData pData);
-
-        // Registers a message value with the operating system, that is guaranteed to be unique throughout the system for a given 'msg' string.
-        // This function is needed in order for the AppBar to be able to receive notifications from the operating system.
+        
+        /// <summary>
+        /// Registers a message value with the operating system, that is guaranteed to be unique throughout the system for a given 'msg' string.
+        /// </summary>
+        /// <param name="msg">The message to be registered.</param>
+        /// <returns>
+        /// If the message is successfully registered, the return value is a message identifier in the range 0xC000 through 0xFFFF. If the
+        /// function fails, the return value is zero.
+        /// </returns>
+        /// <remarks>This function is needed in order for the AppBar to be able to receive notifications from the operating system.</remarks>
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
         private static extern uint RegisterWindowMessage(string msg);
 
-        // Retrieves information about a display monitor and stores that information in a 'MonitorInfoData' struct.
-        // This function is needed to place the AppBar properly on multiple display setups.
+        /// <summary>
+        /// Retrieves information about a display monitor and stores that information in a 'MonitorInfoData' struct.
+        /// </summary>
+        /// <param name="hMonitor">A handle to the display monitor of interest.</param>
+        /// <param name="lpmi">A reference (pointer) to a MonitorInfoData struct.</param>
+        /// <returns>If the function succeeds, the return value is nonzero. If the function fails, the return value is zero.</returns>
+        /// <remarks>This function is needed to place the AppBar properly on multi-monitor setups.</remarks>
         [DllImport("User32.dll")]
         private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MonitorInfoData lpmi);
 
-        // Retrieves a handle to the display monitor that contains a specified point.
-        // This function is used to get the monitor handle for the 'GetMonitorInfo' function.
+        /// <summary>
+        /// Retrieves a handle to the display monitor that contains a specified point.
+        /// </summary>
+        /// <param name="pt">A WinApiPoint struct that specifies the point of interest in virtual-screen coordinates.</param>
+        /// <param name="dwFlags">Determines the function's return value if the point is not contained within any display monitor.
+        /// The possible values are listed in MonitorInfoOnNoIntersection.</param>
+        /// <returns>
+        /// If the point is contained by a display monitor, the return value is an HMONITOR handle to that display monitor.
+        /// If the point is not contained by a display monitor, the return value depends on the value of dwFlags.
+        /// </returns>
+        /// <remarks>This function is used to get the monitor handle for the 'GetMonitorInfo' function.</remarks>
         [DllImport("User32.dll")]
         private static extern IntPtr MonitorFromPoint(WinApiPoint pt, int dwFlags);
 
-        // Retrieves a handle to the display monitor that has the largest area of intersection with a specified rectangle.
-        // This function is used to get the monitor handle for the 'GetMonitorInfo' function.
+        /// <summary>
+        /// Retrieves a handle to the display monitor that has the largest area of intersection with a specified rectangle.
+        /// </summary>
+        /// <param name="lprc">A pointer to a WinApiRectanglePoints struct that specifies the rectangle of interest in 
+        /// virtual-screen coordinates.</param>
+        /// <param name="dwFlags">Determines the function's return value if the rectangle is not contained within any display
+        /// monitor. The possible values are listed in MonitorInfoOnNoIntersection.</param>
+        /// <returns>
+        /// If the point is contained by a display monitor, the return value is an HMONITOR handle to that display monitor.
+        /// If the point is not contained by a display monitor, the return value depends on the value of dwFlags.
+        /// </returns>
+        /// <remarks>This function is used to get the monitor handle for the 'GetMonitorInfo' function.</remarks>
         [DllImport("User32.dll")]
         private static extern IntPtr MonitorFromRect(ref WinApiRectanglePoints lprc, int dwFlags);
-
-        // Retrieves a handle to the display monitor that has the largest area of intersection with the bounding rectangle
-        // of a specified window. This function is used to get the monitor handle for the 'GetMonitorInfo' function.
+        
+        /// <summary>
+        /// Retrieves a handle to the display monitor that has the largest area of intersection with the bounding rectangle
+        /// of a specified window.
+        /// </summary>
+        /// <param name="hWnd">A handle to the window of interest.</param>
+        /// <param name="dwFlags">Determines the function's return value if the window is not contained within any display
+        /// monitor. The possible values are listed in MonitorInfoOnNoIntersection.</param>
+        /// <returns></returns>
+        /// <remarks>This function is used to get the monitor handle for the 'GetMonitorInfo' function.</remarks>
         [DllImport("User32.dll")]
         private static extern IntPtr MonitorFromWindow(IntPtr hWnd, int dwFlags);
-        
+
         /// <summary>
         /// Moves the window to the position specified by the X, Y, nWidth and nHeight parameters.
         /// </summary>
@@ -817,15 +998,29 @@ namespace AppBarServices
         /// <param name="nWidth">Width in pixels.</param>
         /// <param name="nHeight">Height in pixels.</param>
         /// <param name="bRepaint">Indicates whether the window should be repainted after the function moved the window.</param>
-        /// <returns></returns>
+        /// <returns>
+        /// If the function succeeds, the return value is nonzero. 
+        /// If the function fails, the return value is zero.</returns>
+        /// <remarks>
+        /// This function is used to move the handled window because it does so smoother compared to moving the
+        /// handled window by changing its left, top, width and height values via WPF.
+        /// </remarks>
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
         private static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
-        
+
         /// <summary>
         /// Retrieves the position of the mouse cursor, in screen coordinates.
         /// </summary>
         /// <param name="pt">A reference to a WinApiPoint strcut that receives the screen coordinates of the cursor.</param>
-        /// <returns>Returns true if successful and false otherwise.</returns>
+        /// <returns>Returns true if successful, false otherwise.</returns>
+        /// <remarks>
+        /// This function is used to get the position of the mouse cursor when the handled window is being moved in order to
+        /// enable the PreviewToSnap funcionality of the AppBarHandler. Please note that I do not know of any way to do this
+        /// using WPF only. There is one solution that is often suggested for this which is using the PointToScreen method.
+        /// While this method generally is capable of returning the position of the mouse cursor, it does not do this when
+        /// the mouse is dragging the window. In this case the returned mouse cursor position is always (0,0). Therefore I
+        /// am using this WinApi function.
+        /// </remarks>
         [DllImport("User32.dll")]
         private static extern bool GetCursorPos(ref WinApiPoint pt);
         #endregion

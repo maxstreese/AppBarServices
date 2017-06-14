@@ -62,4 +62,7 @@
 * -
 
 ## Session 2017-06-14
-* 
+* Important note for AutoHide AppBars
+  * if doAutoHide = true: use the desired attributes for SendSetAutoHideBarEx
+  * if doAutoHide = false: use the current attributes for SendSetAutoHideBarEx
+  * The exception to this is the doAutoHide value. Always use that to determine whether to register or unregister as AutoHide.

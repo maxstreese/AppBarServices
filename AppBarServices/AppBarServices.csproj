@@ -44,7 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AppBarHandler.cs" />
-    <Compile Include="Enums\MonitorFromRectOnNoIntersection.cs" />
+    <Compile Include="Enums\MonitorInfoOnNoIntersection.cs" />
     <Compile Include="Enums\NotificationIdentifier.cs" />
     <Compile Include="Enums\MessageIdentifier.cs" />
     <Compile Include="Enums\ScreenEdge.cs" />

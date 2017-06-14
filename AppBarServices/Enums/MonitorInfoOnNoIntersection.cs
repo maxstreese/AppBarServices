@@ -4,7 +4,7 @@
 
 namespace AppBarServices.Enums
 {
-    internal enum MonitorFromRectOnNoIntersection
+    internal enum MonitorInfoOnNoIntersection
     {
         MONITOR_DEFAULTTONULL,
         MONITOR_DEFAULTTOPRIMARY,
