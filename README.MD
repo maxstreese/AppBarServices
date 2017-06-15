@@ -1,6 +1,8 @@
 # **AppBarServices**
 _**Careful, this is still under construction!**_
 
+![Showcase](Images/Showcase.gif)
+
 ## **General**
 AppBarServices is a .NET class library written in C# whose intended use is to provide AppBarServices (such as registering and positioning an AppBar) to a WPF application.
 

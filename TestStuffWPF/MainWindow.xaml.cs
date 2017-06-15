@@ -17,6 +17,7 @@ using System.Windows.Shapes;
 
 using AppBarServices;
 using AppBarServices.Enums;
+using AppBarServices.Structs;
 
 using System.Windows.Interop;
 using System.Runtime.InteropServices;
@@ -29,38 +30,20 @@ namespace TestStuffWPF
     public partial class MainWindow : Window
     {
         AppBarHandler _appBarHandler;
-        double _appBarMarginVisible = 0.1;
-        double _appBarMarginHidden = 0.05;
 
         public MainWindow()
         {
             InitializeComponent();
-            _appBarHandler = new AppBarHandler(this);
-            Closing += MainWindow_Closing;
         }
 
         private void btnPlaceTop_Click(object sender, RoutedEventArgs e)
         {
-            if (_appBarHandler.AppBarIsRegistered == false)
-            {
-                _appBarHandler.PlaceAppBar(true, ScreenEdge.Top, _appBarMarginVisible, _appBarMarginHidden);
-            }
-            else
-            {
-                // _appBarHandler.MoveAppBar(ScreenEdge.Top);
-            }
+            _appBarHandler.PlaceAppBar(ScreenEdge.Top);
         }
 
         private void btnPlaceLeft_Click(object sender, RoutedEventArgs e)
         {
-            if (_appBarHandler.AppBarIsRegistered == false)
-            {
-                _appBarHandler.PlaceAppBar(false, ScreenEdge.Left, _appBarMarginVisible);
-            }
-            else
-            {
-                _appBarHandler.MoveAppBar(ScreenEdge.Left);
-            }
+            _appBarHandler.PlaceAppBar(ScreenEdge.Left);
         }
 
         private void btnRemove_Click(object sender, RoutedEventArgs e)
@@ -70,31 +53,12 @@ namespace TestStuffWPF
 
         private void btnPlaceRight_Click(object sender, RoutedEventArgs e)
         {
-            if (_appBarHandler.AppBarIsRegistered == false)
-            {
-                _appBarHandler.PlaceAppBar(false, ScreenEdge.Right, _appBarMarginVisible);
-            }
-            else
-            {
-                _appBarHandler.MoveAppBar(ScreenEdge.Right);
-            }
+            _appBarHandler.PlaceAppBar(ScreenEdge.Right);
         }
 
         private void btnPlaceBottom_Click(object sender, RoutedEventArgs e)
         {
-            if (_appBarHandler.AppBarIsRegistered == false)
-            {
-                _appBarHandler.PlaceAppBar(false, ScreenEdge.Bottom, _appBarMarginVisible);
-            }
-            else
-            {
-                _appBarHandler.MoveAppBar(ScreenEdge.Bottom);
-            }
-        }
-
-        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-        {
-            _appBarHandler.RemoveAppBar();
+            _appBarHandler.PlaceAppBar(ScreenEdge.Bottom);
         }
 
         // **********************************************************************************************************
@@ -105,6 +69,19 @@ namespace TestStuffWPF
 
         private void btnStuffA_Click(object sender, RoutedEventArgs e)
         {
+            DesiredAppBarAttributes desiredAppBarAttributes  = new DesiredAppBarAttributes();
+            desiredAppBarAttributes.doAutoHide = true;
+            desiredAppBarAttributes.doRegister = false;
+            desiredAppBarAttributes.visibleMargin = 0.05;
+            desiredAppBarAttributes.hiddenMargin = 0.005;
+            desiredAppBarAttributes.screenEdge = ScreenEdge.Top;
+
+            PreviewAttributes previewAttributes = new PreviewAttributes();
+            previewAttributes.doPreviewToSnap = false;
+
+            _appBarHandler = new AppBarHandler(this, desiredAppBarAttributes, previewAttributes);
+
+            /*
             if (_windowSource == null)
             {
                 WindowInteropHelper windowHelper = new WindowInteropHelper(this);
@@ -117,10 +94,12 @@ namespace TestStuffWPF
                 _isHooked = true;
 
             }
+            */
         }
 
         private void btnStuffB_Click(object sender, RoutedEventArgs e)
         {
+            /*
             if (_isHooked)
             {
                 _windowSource.RemoveHook(new HwndSourceHook(ProcessWinApiMessages));
@@ -131,8 +110,10 @@ namespace TestStuffWPF
             {
                 _previewWindow.Close();
             }
+            */
         }
 
+        /*
         private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
             if (uMsg == 534)
@@ -173,5 +154,6 @@ namespace TestStuffWPF
 
         [DllImport("User32.dll")]
         private static extern bool GetCursorPos(ref AppBarServices.Structs.WinApiPoint pt);
+        */
     }
 }

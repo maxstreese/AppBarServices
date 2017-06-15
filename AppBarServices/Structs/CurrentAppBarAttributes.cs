@@ -29,7 +29,7 @@ namespace AppBarServices.Structs
         internal double hiddenMargin;
         // The rectangle of the AppBar window.
         internal WinApiRectanglePoints windowRectangle;
-        // The screen rectangle of the screen the AppBar is on.
-        internal WinApiRectanglePoints screenRectangle;
+        // The monitor the AppBar is on.
+        internal MonitorInfoData monitorPlacedOn;
     }
 }
