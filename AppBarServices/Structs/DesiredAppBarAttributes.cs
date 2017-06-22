@@ -10,12 +10,23 @@ namespace AppBarServices.Structs
         /// <summary>
         /// Whether ór not the AppBar should register.
         /// </summary>
-        public bool doRegister;
+        internal bool doRegister;
+
+        /// <summary>
+        /// Whether or not AutoHide is the default setting for the AppBar.
+        /// </summary>
+        /// <remarks>
+        /// This member is similar to the member doAutoHide but not the same. This member is used to decide whether the
+        /// AppBar should be placed as AutoHide whenever it is placed again, whereas doAutoHide is used internally by
+        /// method within the AppBarHandler to decide whether at a particular moment in time the AppBar should get
+        /// registered as AutoHide or not (i.e. unregistered).
+        /// </remarks>
+        public bool AutoHideIsDefault;
         
         /// <summary>
         /// Whether or not the AppBar should AutoHide when placed.
         /// </summary>
-        public bool doAutoHide;
+        internal bool doAutoHide;
         
         /// <summary>
         /// The screen edge the AppBar should be bound to.

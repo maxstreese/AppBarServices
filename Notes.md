@@ -68,4 +68,10 @@
   * The exception to this is the doAutoHide value. Always use that to determine whether to register or unregister as AutoHide.
 
 ## Session 2017-06-15
+* --
+
+## Session 2017-06-21
+* --
+
+## Session 2017-06-22
 * 

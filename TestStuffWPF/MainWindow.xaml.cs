@@ -70,8 +70,7 @@ namespace TestStuffWPF
         private void btnStuffA_Click(object sender, RoutedEventArgs e)
         {
             DesiredAppBarAttributes desiredAppBarAttributes  = new DesiredAppBarAttributes();
-            desiredAppBarAttributes.doAutoHide = true;
-            desiredAppBarAttributes.doRegister = false;
+            desiredAppBarAttributes.AutoHideIsDefault = true;
             desiredAppBarAttributes.visibleMargin = 0.05;
             desiredAppBarAttributes.hiddenMargin = 0.005;
             desiredAppBarAttributes.screenEdge = ScreenEdge.Top;

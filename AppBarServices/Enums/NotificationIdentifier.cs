@@ -16,6 +16,8 @@ namespace AppBarServices.Enums
         ABN_FULLSCREENAPP,
         // Notifies the system when an appbar's position has changed. An appbar should call this message in 
         // response to the WM_WINDOWPOSCHANGED message.
-        ABN_WINDOWARRANGE
+        ABN_WINDOWARRANGE,
+
+        WM_MOVING = 534
     }
 }

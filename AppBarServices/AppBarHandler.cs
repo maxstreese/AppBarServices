@@ -1,7 +1,4 @@
-﻿// The class 'AppBarHandler' implements all of the logic of 'AppBarServices'. It is the only class defined with the public modifier
-// and its intended use is for a WPF window to define it as a member and call its public methods in order to implement an AppBar. 
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 using System;
 using System.Windows;
@@ -241,8 +238,11 @@ namespace AppBarServices
                 if (SendAppBarNew())
                 {
                     // Check whether the AppBar should AutoHide or not and proceed accordingly.
-                    if (_desiredAppBarAttributes.doAutoHide)
+                    if (_desiredAppBarAttributes.AutoHideIsDefault)
                     {
+                        // We want the AppBar to AutoHide.
+                        _desiredAppBarAttributes.doAutoHide = true;
+                        
                         // Try to register the AppBar as AutoHide. If that fails, unregister it and return false.
                         if (!SendSetAutoHideBarEx())
                         {
@@ -473,6 +473,13 @@ namespace AppBarServices
             SHAppBarMessage((int)MessageIdentifier.ABM_QUERYPOS, ref appBarData);
             AdjustQueriedAppBarDataRectangle(ref appBarData, desiredRectangle);
 
+            // If the AppBar is already registered, check if the position will change. If not return true and exit the method because there is
+            // no reason to move the AppBar.
+            if (_currentAppBarAttributes.isRegistered && AppBarPositionIsUnchanged(appBarData))
+            {
+                return true;
+            }
+
             // Reserve the position for the AppBar and then check if the position set by the operating system is equal in
             // width or height (depending on the defined screen edge) to the desired width or height value. If that is not
             // the case return false.
@@ -595,28 +602,76 @@ namespace AppBarServices
 
 
         #region Methods to encapsulate the WinApi - WindowProc implementation
-        // Processes window messages send by the operating system. This is a callback function that requires a hook on the
-        // Win32 representation of the _windowToHandle (HwndSource object). This hook is added upon registration of the AppBar
-        // and removed upon removal of the AppBar. This is the implementation of the placeholder function named WindowProc
-        // (use that name to look it up in the microsoft docs).
+        /// <summary>
+        /// Processes window messages send by the operating system.
+        /// </summary>
+        /// <param name="hWnd">A handle to the window.</param>
+        /// <param name="uMsg">The message.</param>
+        /// <param name="wParam">Additional message information. The contents of this parameter depend on the value of the uMsg parameter.</param>
+        /// <param name="lParam">Additional message information. The contents of this parameter depend on the value of the uMsg parameter. </param>
+        /// <param name="handled">Reference parameter which should be set to true when a message was handled (i.e. the method did stuff).</param>
+        /// <returns></returns>
+        /// <remarks>
+        /// This is a callback function that requires a hook on the Win32 representation of the handled window (HwndSource object in C#).
+        /// Because this hook is added upon instantiation of the AppBarHandler, the handled window must be fully rendered/loaded
+        /// (which is it!? -> check it!) at this time. That's why the AppBarHandler cannot for instance be instantiated in the 
+        /// constructor of the handled window. This method is the implementation of the placeholder function named WindowProc
+        /// (use that name to look it up in the microsoft docs).
+        /// </remarks>
         private IntPtr ProcessWinApiMessages(IntPtr hWnd, int uMsg, IntPtr wParam, IntPtr lParam, ref bool handled)
         {
+            // Used to check for notifications that concern the AppBar.
             if (uMsg == _callbackID)
             {
                 if (wParam.ToInt32() == (int)NotificationIdentifier.ABN_POSCHANGED)
                 {
-                    // System.Diagnostics.Debug.Print("hi");
+                    // Some changes in here might cause the AppBar to unregister.
+                    bool stillRegistered = true;
                     
-                    /*
-                    SendAppBarQueryPosSetPos(doHide: _currentAppBarAttributes.isHidden);
+                    // Check if the Monitor has changed. If that is the case we have to check if the AppBar is AutoHide.
+                    if (MonitorHasChanged())
+                    {
+                        if (_currentAppBarAttributes.isRegisteredAutoHide)
+                        {
+                            // It could be that the AppBar is registered as AutoHide on a monitor that is not actually there
+                            // anymore. Therefore unregister it at the old position.
+                            _desiredAppBarAttributes.doAutoHide = false;
+                            SendSetAutoHideBarEx();
+
+                            // After unregistering the AppBar at the old position, re-register the AppBar as AutoHide on the
+                            // new screen.
+                            _desiredAppBarAttributes.doAutoHide = true;
+                            if (!SendSetAutoHideBarEx())
+                            {
+                                _desiredAppBarAttributes.doRegister = false;
+                                SendAppBarRemove();
+                                stillRegistered = false;
+                            }
+                        }
+                    }
+
+                    // Update the position of the AppBar if it is still registered. Note: The method checks if the
+                    // rectangle of the AppBar has to change. Only if that is the case will it move the AppBar.
+                    if (stillRegistered)
+                    {
+                        if (!SendAppBarQueryPosSetPos())
+                        {
+                            _desiredAppBarAttributes.doRegister = false;
+                            SendAppBarRemove();
+                        }
+                    }
+
+                    // We handled something so set the handled parameter to true.
                     handled = true;
-                    */
                 }
             }
 
-            if (uMsg == 534)
+            // Used for the PreviewToSnap functionality of the AppBarHandler.
+            if (uMsg == (int)NotificationIdentifier.WM_MOVING)
             {
                 // System.Diagnostics.Debug.Print("HalliHallo");
+
+                handled = true;
             }
 
             return IntPtr.Zero;
@@ -796,6 +851,29 @@ namespace AppBarServices
             }
         }
 
+        /// <summary>
+        /// Checks whether the position of the AppBar has changed or not.
+        /// </summary>
+        /// <param name="appBarData">An AppBarData struct containing the rectangle values for the new AppBar position</param>
+        /// <returns>Returns true if the position hasn't changes, false otherwise.</returns>
+        private bool AppBarPositionIsUnchanged(AppBarData appBarData)
+        {
+            // Calculate the differences for each side of the rectangle.
+            int differenceLeft = appBarData.rc.left - _currentAppBarAttributes.windowRectangle.left;
+            int differenceTop = appBarData.rc.top - _currentAppBarAttributes.windowRectangle.top;
+            int differenceRight = appBarData.rc.right - _currentAppBarAttributes.windowRectangle.right;
+            int differenceBottom = appBarData.rc.bottom - _currentAppBarAttributes.windowRectangle.bottom;
+
+            // Check if all differences are 0. If so return true.
+            if (differenceLeft == 0 && differenceTop == 0 && differenceRight == 0 && differenceBottom == 0)
+            {
+                return true;
+            }
+
+            // Not all sides are the same so return false.
+            return false;
+        }
+
         // Checks if the AppBarData.rc rectangle that was set by the system when it received the ABM_SETPOS message
         // is equal in width or height (depending on the defined screen edge) to the desired rectangle and does not
         // violate the boundaries of the current monitor. This method is here to guarantee that only those AppBars 
@@ -856,6 +934,10 @@ namespace AppBarServices
             return true;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="doHide"></param>
         private void HideUnhide(bool doHide = true)
         {
             // Get the rectangle information of the monitor the handled window is currently on.
@@ -876,24 +958,40 @@ namespace AppBarServices
                 margin = _currentAppBarAttributes.visibleMargin;
             }
 
-            // Set the margin according to the screen edge the AppBar is bound to.
+            // Move the window according the the screen the AppBar is bound to. Do this using the MoveWindow function of the
+            // WinApi because this is smoother than doing it with WPF.
+            int X = 0;
+            int Y = 0;
+            int nWidth = 0;
+            int nHeight = 0;
             switch (_currentAppBarAttributes.screenEdge)
             {
                 case ScreenEdge.Left:
-                    _windowToHandle.Width = currentMonitorWidth * margin;
+                    X = _currentAppBarAttributes.windowRectangle.left;
+                    Y = _currentAppBarAttributes.windowRectangle.top;
+                    nWidth = (int)(currentMonitorWidth * margin);
+                    nHeight = _currentAppBarAttributes.windowRectangle.bottom - _currentAppBarAttributes.windowRectangle.top;
                     break;
                 case ScreenEdge.Top:
-                    _windowToHandle.Height = currentMonitorHeight * margin;
+                    X = _currentAppBarAttributes.windowRectangle.left;
+                    Y = _currentAppBarAttributes.windowRectangle.top;
+                    nWidth = _currentAppBarAttributes.windowRectangle.right - _currentAppBarAttributes.windowRectangle.left;
+                    nHeight = (int)(currentMonitorHeight * margin);
                     break;
                 case ScreenEdge.Right:
-                    _windowToHandle.Width = currentMonitorWidth * margin;
-                    _windowToHandle.Left = currentMonitor.rcMonitor.right - currentMonitorWidth * margin;
+                    X = (int)(currentMonitor.rcMonitor.right - currentMonitorWidth * margin);
+                    Y = _currentAppBarAttributes.windowRectangle.top;
+                    nWidth = (int)(currentMonitorWidth * margin);
+                    nHeight = _currentAppBarAttributes.windowRectangle.bottom - _currentAppBarAttributes.windowRectangle.top;                
                     break;
                 case ScreenEdge.Bottom:
-                    _windowToHandle.Height = currentMonitorHeight * margin;
-                    _windowToHandle.Top = currentMonitor.rcMonitor.bottom - currentMonitorHeight * margin;
+                    X = _currentAppBarAttributes.windowRectangle.left;
+                    Y = (int)(currentMonitor.rcMonitor.bottom - currentMonitorHeight * margin);
+                    nWidth = _currentAppBarAttributes.windowRectangle.right - _currentAppBarAttributes.windowRectangle.left;
+                    nHeight = (int)(currentMonitorHeight * margin);
                     break;
             }
+            MoveWindow(_windowSource.Handle, X, Y, nWidth, nHeight, true);
 
             // Finally invert _currentAppBarAttributes.isHidden to reflect the new status of the AppBar. This could have already
             // been done in the previous if-statement. I prever it to be here though because it belongs here logically.
@@ -905,6 +1003,27 @@ namespace AppBarServices
             {
                 _currentAppBarAttributes.isHidden = false;
             }
+        }
+
+        private bool MonitorHasChanged()
+        {
+            // Get the information for the new monitor by using the WindowHandle.
+            MonitorInfoData newMonitor = GetMonitorInfoFromWindowHandle();
+            
+            // Calculate the differences for each side of the monitor rectangles.
+            int differenceLeft = newMonitor.rcMonitor.left - _currentAppBarAttributes.monitorPlacedOn.rcMonitor.left;
+            int differenceTop = newMonitor.rcMonitor.top - _currentAppBarAttributes.monitorPlacedOn.rcMonitor.top;
+            int differenceRight = newMonitor.rcMonitor.right - _currentAppBarAttributes.monitorPlacedOn.rcMonitor.right;
+            int differenceBottom = newMonitor.rcMonitor.bottom - _currentAppBarAttributes.monitorPlacedOn.rcMonitor.bottom;
+
+            // Check if all differences are 0. If so, return false.
+            if (differenceLeft == 0 && differenceTop == 0 && differenceRight == 0 && differenceBottom == 0)
+            {
+                return false;
+            }
+
+            // The monitor has changed, so return true.
+            return true;
         }
         #endregion
 
